@@ -5,7 +5,15 @@ class Submission {
   final DateTime timestamp;
   final String participantId;
   final String ageRange;
+  final String? gender;
+  final bool? hasPeriod;
+  final int? cycleDay;
+  final String? cyclePhase;
+  final DateTime? lastPeriodStart;
   final int wellbeingRating;
+  final int sleepQuality;
+  final int neuropathicPain;
+  final int musculoskeletalPain;
   final String comment;
   final int? stepCount;
   final double? heartRateBpm;
@@ -17,7 +25,15 @@ class Submission {
     required this.timestamp,
     required this.participantId,
     required this.ageRange,
+    this.gender,
+    this.hasPeriod,
+    this.cycleDay,
+    this.cyclePhase,
+    this.lastPeriodStart,
     required this.wellbeingRating,
+    required this.sleepQuality,
+    required this.neuropathicPain,
+    required this.musculoskeletalPain,
     required this.comment,
     this.stepCount,
     this.heartRateBpm,
@@ -92,6 +108,7 @@ class Submission {
       'participant': {
         'id': participantId,
         'age_range': ageRange,
+        if (gender != null) 'gender': gender,
       },
       'self_report': {
         'wellbeing_rating': {
@@ -100,7 +117,35 @@ class Submission {
           'scale_max': 5,
           'scale_description': '1=very poor, 5=excellent',
         },
+        'sleep_quality': {
+          'value': sleepQuality,
+          'scale_min': 1,
+          'scale_max': 5,
+          'scale_description': '1=very poor, 5=excellent',
+        },
+        'pain': {
+          'neuropathic': {
+            'value': neuropathicPain,
+            'descriptor': 'burning/tingling/electric',
+            'scale_min': 0,
+            'scale_max': 10,
+          },
+          'musculoskeletal': {
+            'value': musculoskeletalPain,
+            'descriptor': 'aching/stiffness/pressure',
+            'scale_min': 0,
+            'scale_max': 10,
+          },
+        },
         'comment': comment,
+        if (gender == 'female') 'menstrual_status': {
+          'on_period': hasPeriod,
+          if (cycleDay != null) 'cycle_day': cycleDay,
+          if (cyclePhase != null) 'cycle_phase': cyclePhase,
+          if (lastPeriodStart != null)
+            'last_period_start':
+                lastPeriodStart!.toIso8601String().split('T').first,
+        },
       },
       'health_metrics': metrics,
       'device': {

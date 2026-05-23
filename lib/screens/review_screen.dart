@@ -15,7 +15,15 @@ class ReviewScreen extends StatefulWidget {
   final bool healthGranted;
   final String participantId;
   final String ageRange;
+  final String? gender;
+  final bool? hasPeriod;
+  final int? cycleDay;
+  final String? cyclePhase;
+  final DateTime? lastPeriodStart;
   final int wellbeingRating;
+  final int sleepQuality;
+  final int neuropathicPain;
+  final int musculoskeletalPain;
   final String comment;
 
   const ReviewScreen({
@@ -24,7 +32,15 @@ class ReviewScreen extends StatefulWidget {
     required this.healthGranted,
     required this.participantId,
     required this.ageRange,
+    this.gender,
+    this.hasPeriod,
+    this.cycleDay,
+    this.cyclePhase,
+    this.lastPeriodStart,
     required this.wellbeingRating,
+    required this.sleepQuality,
+    required this.neuropathicPain,
+    required this.musculoskeletalPain,
     required this.comment,
   });
 
@@ -66,6 +82,21 @@ class _ReviewScreenState extends State<ReviewScreen> {
     if (mounted) setState(() => _loadingHealth = false);
   }
 
+  String _phaseLabel(String? phase, AppLocalizations l) => switch (phase) {
+        'menstrual' => l.phaseMenstrual,
+        'follicular' => l.phaseFollicular,
+        'ovulatory' => l.phaseOvulatory,
+        'luteal' || 'late_luteal' => l.phaseLuteal,
+        _ => '—',
+      };
+
+  String _genderLabel(String code, AppLocalizations l) => switch (code) {
+        'male' => l.genderMale,
+        'female' => l.genderFemale,
+        'other' => l.genderOther,
+        _ => l.genderPreferNotToSay,
+      };
+
   Future<void> _submit() async {
     setState(() => _submitting = true);
 
@@ -74,7 +105,15 @@ class _ReviewScreenState extends State<ReviewScreen> {
       timestamp: DateTime.now(),
       participantId: widget.participantId,
       ageRange: widget.ageRange,
+      gender: widget.gender,
+      hasPeriod: widget.hasPeriod,
+      cycleDay: widget.cycleDay,
+      cyclePhase: widget.cyclePhase,
+      lastPeriodStart: widget.lastPeriodStart,
       wellbeingRating: widget.wellbeingRating,
+      sleepQuality: widget.sleepQuality,
+      neuropathicPain: widget.neuropathicPain,
+      musculoskeletalPain: widget.musculoskeletalPain,
       comment: widget.comment,
       stepCount: _steps,
       heartRateBpm: _heartRate,
@@ -124,6 +163,18 @@ class _ReviewScreenState extends State<ReviewScreen> {
               children: [
                 _Row(l.labelId, widget.participantId),
                 _Row(l.ageRange, widget.ageRange),
+                if (widget.gender != null)
+                  _Row(l.gender, _genderLabel(widget.gender!, l)),
+                if (widget.gender == 'female') ...[
+                  _Row(l.onPeriodQuestion,
+                      widget.hasPeriod == null
+                          ? '—'
+                          : widget.hasPeriod!
+                              ? l.yes
+                              : l.no),
+                  if (widget.cycleDay != null)
+                    _Row(l.cycleDay, '${widget.cycleDay}. gün — ${_phaseLabel(widget.cyclePhase, l)}'),
+                ],
               ],
             ),
           ),
@@ -135,6 +186,9 @@ class _ReviewScreenState extends State<ReviewScreen> {
               icon: Icons.self_improvement_rounded,
               children: [
                 _Row(l.labelRating, '${widget.wellbeingRating} / 5'),
+                _Row(l.sleepQuality, '${widget.sleepQuality} / 5'),
+                _Row(l.neuropathicPain, '${widget.neuropathicPain} / 10'),
+                _Row(l.musculoskeletalPain, '${widget.musculoskeletalPain} / 10'),
                 if (widget.comment.isNotEmpty) _Row(l.labelComment, widget.comment),
               ],
             ),

@@ -232,6 +232,10 @@ class _SubmissionCardState extends State<_SubmissionCard> {
                     child: Text(dateStr,
                         style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
                   ),
+                  if ((selfReport?['menstrual_status'] as Map?)?['on_period'] == true) ...[
+                    const Icon(Icons.water_drop, color: Color(0xFFB71C1C), size: 18),
+                    const SizedBox(width: 6),
+                  ],
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(

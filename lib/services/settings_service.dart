@@ -48,4 +48,14 @@ class SettingsService extends ChangeNotifier {
       await prefs.setString(_keyLocale, locale.languageCode);
     }
   }
+
+  static Future<bool> checkConsent(String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('consent_$userId') ?? false;
+  }
+
+  static Future<void> saveConsent(String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('consent_$userId', true);
+  }
 }

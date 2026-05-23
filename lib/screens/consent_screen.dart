@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../services/settings_service.dart';
+import '../services/supabase_service.dart';
 import '../widgets/app_page_route.dart';
 import '../widgets/fade_slide_in.dart';
 import 'welcome_screen.dart';
@@ -89,12 +90,22 @@ class _ConsentScreenState extends State<ConsentScreen> {
               children: [
                 FilledButton(
                   onPressed: _agreed
-                      ? () => Navigator.pushReplacement(
+                      ? () async {
+                          final userId = SupabaseService().currentUser?.id;
+                          if (userId != null) {
+                            await Future.wait([
+                              SettingsService.saveConsent(userId),
+                              SupabaseService().markConsentGiven(),
+                            ]);
+                          }
+                          if (!context.mounted) return;
+                          Navigator.pushReplacement(
                             context,
                             AppPageRoute(
                               page: WelcomeScreen(settings: widget.settings),
                             ),
-                          )
+                          );
+                        }
                       : null,
                   child: Text(l.consentAgree),
                 ),

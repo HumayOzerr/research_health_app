@@ -5,6 +5,7 @@ import '../services/health_service.dart';
 import '../services/settings_service.dart';
 import '../widgets/app_page_route.dart';
 import '../widgets/fade_slide_in.dart';
+import '../widgets/language_sheet.dart';
 import 'form_screen.dart';
 import 'history_screen.dart';
 import 'settings_screen.dart';
@@ -74,13 +75,17 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         title: Text(l.appTitle),
         actions: [
           IconButton(
+            icon: const Icon(Icons.language_rounded),
+            onPressed: () => LanguageSheet.show(context, widget.settings),
+          ),
+          IconButton(
             icon: const Icon(Icons.history_rounded),
             tooltip: l.pastSubmissions,
             onPressed: _openHistory,
           ),
           IconButton(
             icon: const Icon(Icons.settings_rounded),
-            tooltip: l.settings,
+            tooltip: l.settingsTitle,
             onPressed: _openSettings,
           ),
         ],
