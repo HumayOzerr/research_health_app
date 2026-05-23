@@ -29,6 +29,7 @@ class SupabaseService {
     required String lastName,
     required String gender,
     String? ageRange,
+    int? heightCm,
   }) async {
     final email = _toEmail(participantId);
     final res = await client.auth.signUp(
@@ -44,6 +45,14 @@ class SupabaseService {
         'last_name': lastName,
         'gender': gender,
       });
+      if (heightCm != null) {
+        try {
+          await client
+              .from('profiles')
+              .update({'height_cm': heightCm})
+              .eq('id', res.user!.id);
+        } catch (_) {}
+      }
     }
     return res;
   }
@@ -70,7 +79,7 @@ class SupabaseService {
     try {
       final result = await client
           .from('profiles')
-          .select('participant_id, first_name, last_name, gender, last_period_start, consent_given')
+          .select('participant_id, first_name, last_name, gender, last_period_start, consent_given, height_cm')
           .eq('id', currentUser!.id)
           .single();
       debugPrint('[getProfile] success: $result');

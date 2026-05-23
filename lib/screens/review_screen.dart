@@ -6,6 +6,7 @@ import '../l10n/app_localizations.dart';
 import '../models/submission.dart';
 import '../services/api_service.dart';
 import '../services/health_service.dart';
+import '../widgets/app_bar_title.dart';
 import '../widgets/app_page_route.dart';
 import '../widgets/fade_slide_in.dart';
 import 'result_screen.dart';
@@ -144,7 +145,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
     final l = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l.reviewTitle)),
+      appBar: AppBar(title: AppBarTitle(l.reviewTitle)),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [

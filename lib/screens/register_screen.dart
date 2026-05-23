@@ -21,6 +21,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passwordCtrl = TextEditingController();
   final _confirmCtrl = TextEditingController();
   final _idCtrl = TextEditingController();
+  final _heightCtrl = TextEditingController();
   String? _ageRange;
   String? _gender;
   bool _genderError = false;
@@ -47,6 +48,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _passwordCtrl.dispose();
     _confirmCtrl.dispose();
     _idCtrl.dispose();
+    _heightCtrl.dispose();
     super.dispose();
   }
 
@@ -68,6 +70,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         lastName: _lastNameCtrl.text.trim(),
         gender: _gender!,
         ageRange: _ageRange,
+        heightCm: int.tryParse(_heightCtrl.text.trim()),
       );
       if (!mounted) return;
       Navigator.pushReplacement(
@@ -96,7 +99,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final onPrimary = cs.onPrimary;
     final heroDark = Color.lerp(cs.primary, Colors.black, 0.28)!;
 
-    return Scaffold(
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
       resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
@@ -212,6 +217,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             validator: (v) => (v == null || v.trim().isEmpty)
                                 ? l.lastNameError
                                 : null,
+                          ),
+                          const SizedBox(height: 14),
+                          SoftField(
+                            controller: _heightCtrl,
+                            label: l.heightCm,
+                            icon: Icons.height_rounded,
+                            keyboardType: TextInputType.number,
+                            textInputAction: TextInputAction.next,
+                            validator: (v) {
+                              final n = int.tryParse(v?.trim() ?? '');
+                              return (n == null || n < 100 || n > 250)
+                                  ? l.heightError
+                                  : null;
+                            },
                           ),
                           const SizedBox(height: 14),
                           _GenderSelector(
@@ -346,6 +365,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         ],
       ),
+    ),
     );
   }
 }

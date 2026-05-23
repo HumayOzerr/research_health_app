@@ -8,6 +8,10 @@ class HealthService {
     HealthDataType.HEART_RATE,
     HealthDataType.ACTIVE_ENERGY_BURNED,
     HealthDataType.SLEEP_ASLEEP,
+    HealthDataType.WALKING_SPEED,
+    HealthDataType.FLIGHTS_CLIMBED,
+    HealthDataType.DISTANCE_WALKING_RUNNING,
+    HealthDataType.RESTING_HEART_RATE,
   ];
 
   Future<void> configure() async {
@@ -84,6 +88,77 @@ class HealthService {
         0,
         (sum, p) => sum + (p.value as NumericHealthValue).numericValue.toDouble(),
       );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<double?> getWalkingSpeed() async {
+    final now = DateTime.now();
+    final yesterday = now.subtract(const Duration(hours: 24));
+    try {
+      final data = await _health.getHealthDataFromTypes(
+        startTime: yesterday,
+        endTime: now,
+        types: [HealthDataType.WALKING_SPEED],
+      );
+      if (data.isEmpty) return null;
+      final total = data.fold<double>(
+          0, (s, p) => s + (p.value as NumericHealthValue).numericValue.toDouble());
+      return total / data.length;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<int?> getTodayFlightsClimbed() async {
+    final now = DateTime.now();
+    final midnight = DateTime(now.year, now.month, now.day);
+    try {
+      final data = await _health.getHealthDataFromTypes(
+        startTime: midnight,
+        endTime: now,
+        types: [HealthDataType.FLIGHTS_CLIMBED],
+      );
+      if (data.isEmpty) return null;
+      return data
+          .fold<double>(
+              0, (s, p) => s + (p.value as NumericHealthValue).numericValue.toDouble())
+          .round();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<double?> getTodayDistanceWalking() async {
+    final now = DateTime.now();
+    final midnight = DateTime(now.year, now.month, now.day);
+    try {
+      final data = await _health.getHealthDataFromTypes(
+        startTime: midnight,
+        endTime: now,
+        types: [HealthDataType.DISTANCE_WALKING_RUNNING],
+      );
+      if (data.isEmpty) return null;
+      final totalMeters = data.fold<double>(
+          0, (s, p) => s + (p.value as NumericHealthValue).numericValue.toDouble());
+      return totalMeters / 1000;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<double?> getRestingHeartRate() async {
+    final now = DateTime.now();
+    final yesterday = now.subtract(const Duration(hours: 24));
+    try {
+      final data = await _health.getHealthDataFromTypes(
+        startTime: yesterday,
+        endTime: now,
+        types: [HealthDataType.RESTING_HEART_RATE],
+      );
+      if (data.isEmpty) return null;
+      return (data.last.value as NumericHealthValue).numericValue.toDouble();
     } catch (_) {
       return null;
     }

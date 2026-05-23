@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../services/supabase_service.dart';
+import '../widgets/app_bar_title.dart';
 import '../widgets/fade_slide_in.dart';
 
 class AccountSettingsScreen extends StatefulWidget {
@@ -120,7 +121,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
     final tt = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: AppBar(title: Text(l.account)),
+      appBar: AppBar(title: AppBarTitle(l.account)),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(

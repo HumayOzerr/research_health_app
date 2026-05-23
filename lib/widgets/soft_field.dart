@@ -10,6 +10,7 @@ class SoftField extends StatelessWidget {
   final TextCapitalization textCapitalization;
   final TextInputAction? textInputAction;
   final void Function(String)? onChanged;
+  final TextInputType? keyboardType;
 
   const SoftField({
     super.key,
@@ -22,6 +23,7 @@ class SoftField extends StatelessWidget {
     this.textCapitalization = TextCapitalization.none,
     this.textInputAction,
     this.onChanged,
+    this.keyboardType,
   });
 
   @override
@@ -36,6 +38,7 @@ class SoftField extends StatelessWidget {
       obscureText: obscureText,
       textCapitalization: textCapitalization,
       textInputAction: textInputAction,
+      keyboardType: keyboardType,
       validator: validator,
       onChanged: onChanged,
       style: tt.bodyLarge?.copyWith(fontWeight: FontWeight.w500),

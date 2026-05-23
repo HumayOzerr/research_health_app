@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../l10n/app_localizations.dart';
 import '../services/settings_service.dart';
+import '../widgets/app_bar_title.dart';
 import '../widgets/app_page_route.dart';
 import '../widgets/fade_slide_in.dart';
 import 'welcome_screen.dart';
@@ -68,7 +69,7 @@ class _ResultScreenState extends State<ResultScreen> {
     final metricCount = metrics?.length ?? 0;
 
     return Scaffold(
-      appBar: AppBar(title: Text(l.resultTitle)),
+      appBar: AppBar(title: AppBarTitle(l.resultTitle)),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [

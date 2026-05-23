@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../services/settings_service.dart';
 import '../services/supabase_service.dart';
+import '../widgets/app_bar_title.dart';
 import '../widgets/app_page_route.dart';
 import '../widgets/fade_slide_in.dart';
 import 'account_settings_screen.dart';
@@ -33,7 +34,7 @@ class SettingsScreen extends StatelessWidget {
     final tt = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: AppBar(title: Text(l.settingsTitle)),
+      appBar: AppBar(title: AppBarTitle(l.settingsTitle)),
       body: ListenableBuilder(
         listenable: settings,
         builder: (context, _) {

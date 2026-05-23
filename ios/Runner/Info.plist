@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Healife</string>
+	<string>HeaLife</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -15,7 +15,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>Healife</string>
+	<string>HeaLife</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -27,7 +27,7 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSHealthShareUsageDescription</key>
-	<string>This app reads your step count to include in the research data submission.</string>
+	<string>This app reads steps, heart rate, sleep, active energy, walking speed, distance, and floors climbed to include in the research data submission.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>This app does not write any health data.</string>
 	<key>UIApplicationSceneManifest</key>

@@ -11,9 +11,17 @@ class AppTheme {
           secondary: _secondary,
           brightness: brightness,
         ),
-        appBarTheme: const AppBarTheme(
+        appBarTheme: AppBarTheme(
           centerTitle: true,
           elevation: 0,
+          titleTextStyle: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.4,
+            color: brightness == Brightness.dark
+                ? Colors.white
+                : const Color(0xFF1565C0),
+          ),
         ),
         cardTheme: CardThemeData(
           elevation: 1,

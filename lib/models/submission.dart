@@ -15,10 +15,16 @@ class Submission {
   final int neuropathicPain;
   final int musculoskeletalPain;
   final String comment;
+  final double? weightKg;
+  final double? bmi;
   final int? stepCount;
   final double? heartRateBpm;
+  final double? restingHeartRateBpm;
   final double? sleepHours;
   final double? activeEnergyKcal;
+  final double? walkingSpeedKmh;
+  final int? flightsClimbed;
+  final double? distanceKm;
 
   Submission({
     required this.id,
@@ -35,10 +41,16 @@ class Submission {
     required this.neuropathicPain,
     required this.musculoskeletalPain,
     required this.comment,
+    this.weightKg,
+    this.bmi,
     this.stepCount,
     this.heartRateBpm,
+    this.restingHeartRateBpm,
     this.sleepHours,
     this.activeEnergyKcal,
+    this.walkingSpeedKmh,
+    this.flightsClimbed,
+    this.distanceKm,
   });
 
   Map<String, dynamic> toJson() {
@@ -98,6 +110,54 @@ class Submission {
       });
     }
 
+    if (walkingSpeedKmh != null) {
+      metrics.add({
+        'type': 'walking_speed',
+        'value': double.parse(walkingSpeedKmh!.toStringAsFixed(2)),
+        'unit': 'km/h',
+        'aggregation': 'average',
+        'period_start_utc': yesterday.toIso8601String(),
+        'period_end_utc': now.toIso8601String(),
+        'source': source,
+      });
+    }
+
+    if (flightsClimbed != null) {
+      metrics.add({
+        'type': 'flights_climbed',
+        'value': flightsClimbed,
+        'unit': 'count',
+        'aggregation': 'sum',
+        'period_start_utc': todayMidnight.toIso8601String(),
+        'period_end_utc': now.toIso8601String(),
+        'source': source,
+      });
+    }
+
+    if (distanceKm != null) {
+      metrics.add({
+        'type': 'distance_walking_running',
+        'value': double.parse(distanceKm!.toStringAsFixed(3)),
+        'unit': 'km',
+        'aggregation': 'sum',
+        'period_start_utc': todayMidnight.toIso8601String(),
+        'period_end_utc': now.toIso8601String(),
+        'source': source,
+      });
+    }
+
+    if (restingHeartRateBpm != null) {
+      metrics.add({
+        'type': 'resting_heart_rate',
+        'value': restingHeartRateBpm!.round(),
+        'unit': 'bpm',
+        'aggregation': 'latest',
+        'period_start_utc': yesterday.toIso8601String(),
+        'period_end_utc': now.toIso8601String(),
+        'source': source,
+      });
+    }
+
     return {
       'schema_version': '1.0',
       'submission': {
@@ -138,6 +198,8 @@ class Submission {
           },
         },
         'comment': comment,
+        if (weightKg != null) 'weight_kg': double.parse(weightKg!.toStringAsFixed(1)),
+        if (bmi != null) 'bmi': double.parse(bmi!.toStringAsFixed(1)),
         if (gender == 'female') 'menstrual_status': {
           'on_period': hasPeriod,
           if (cycleDay != null) 'cycle_day': cycleDay,

@@ -73,7 +73,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(l.appTitle),
+        title: _HeaLifeTitle(),
         actions: [
           IconButton(
             icon: const Icon(Icons.history_rounded),
@@ -389,4 +389,42 @@ class _EcgPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_EcgPainter old) => old.progress != progress;
+}
+
+class _HeaLifeTitle extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.monitor_heart_outlined, size: 20, color: cs.primary),
+        const SizedBox(width: 8),
+        RichText(
+          text: TextSpan(
+            children: [
+              TextSpan(
+                text: 'Hea',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w400,
+                  color: cs.primary,
+                  letterSpacing: 0.2,
+                ),
+              ),
+              TextSpan(
+                text: 'Life',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: cs.primary,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 }

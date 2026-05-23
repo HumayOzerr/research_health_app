@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../services/health_service.dart';
 import '../services/supabase_service.dart';
+import '../widgets/app_bar_title.dart';
 import '../widgets/app_page_route.dart';
 import '../widgets/fade_slide_in.dart';
 import 'review_screen.dart';
@@ -137,7 +138,7 @@ class _FormScreenState extends State<FormScreen> {
     final l = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l.formTitle)),
+      appBar: AppBar(title: AppBarTitle(l.formTitle)),
       body: Form(
         key: _formKey,
         child: ListView(
