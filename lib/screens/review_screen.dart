@@ -173,7 +173,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                               ? l.yes
                               : l.no),
                   if (widget.cycleDay != null)
-                    _Row(l.cycleDay, '${widget.cycleDay}. gün — ${_phaseLabel(widget.cyclePhase, l)}'),
+                    _Row(l.cycleDay, '${widget.cycleDay} — ${_phaseLabel(widget.cyclePhase, l)}'),
                 ],
               ],
             ),
@@ -207,7 +207,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                       )
                     ]
                   : !widget.healthGranted
-                      ? [_Row(l.labelId, l.permissionNotGranted)]
+                      ? [_Row(l.healthMetrics, l.permissionNotGranted)]
                       : [
                           _Row(l.labelStepsToday,
                               _steps != null ? '$_steps steps' : l.noData),

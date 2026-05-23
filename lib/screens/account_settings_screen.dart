@@ -11,7 +11,6 @@ class AccountSettingsScreen extends StatefulWidget {
 }
 
 class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
-  final _formKey = GlobalKey<FormState>();
   final _firstNameCtrl = TextEditingController();
   final _lastNameCtrl = TextEditingController();
   final _idCtrl = TextEditingController();
@@ -69,15 +68,14 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
   }
 
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
     try {
       await SupabaseService().updateProfile(
-        firstName: _firstNameCtrl.text.trim(),
-        lastName: _lastNameCtrl.text.trim(),
+        firstName: _firstNameCtrl.text.trim().isEmpty ? null : _firstNameCtrl.text.trim(),
+        lastName: _lastNameCtrl.text.trim().isEmpty ? null : _lastNameCtrl.text.trim(),
         ageRange: _ageRange,
         gender: _gender,
-        participantId: _idCtrl.text.trim().toUpperCase(),
+        participantId: _idCtrl.text.trim().isEmpty ? null : _idCtrl.text.trim().toUpperCase(),
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -85,11 +83,12 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
           behavior: SnackBarBehavior.floating,
         ));
       }
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(AppLocalizations.of(context).errorUnexpected),
+          content: Text(e.toString()),
           behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 8),
         ));
       }
     } finally {
@@ -124,9 +123,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
       appBar: AppBar(title: Text(l.account)),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : Form(
-              key: _formKey,
-              child: ListView(
+          : ListView(
                 padding: const EdgeInsets.all(24),
                 children: [
                   FadeSlideIn(
@@ -137,9 +134,6 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                         prefixIcon: const Icon(Icons.person_outlined),
                       ),
                       textCapitalization: TextCapitalization.words,
-                      validator: (v) => (v == null || v.trim().isEmpty)
-                          ? l.firstNameError
-                          : null,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -152,9 +146,6 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                         prefixIcon: const Icon(Icons.person_outlined),
                       ),
                       textCapitalization: TextCapitalization.words,
-                      validator: (v) => (v == null || v.trim().isEmpty)
-                          ? l.lastNameError
-                          : null,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -167,9 +158,6 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                         prefixIcon: const Icon(Icons.badge_outlined),
                       ),
                       textCapitalization: TextCapitalization.characters,
-                      validator: (v) => (v == null || v.trim().isEmpty)
-                          ? l.participantIdError
-                          : null,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -245,12 +233,10 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                   ),
                 ],
               ),
-            ),
     );
   }
 }
 
-// ── Change Password Sheet ─────────────────────────────────────────────────────
 
 class _ChangePasswordSheet extends StatefulWidget {
   const _ChangePasswordSheet();

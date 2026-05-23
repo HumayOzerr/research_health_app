@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseService {
@@ -17,7 +18,6 @@ class SupabaseService {
     await Supabase.initialize(url: _url, anonKey: _anonKey);
   }
 
-  // ── Auth ──────────────────────────────────────────────────────────────────
 
   static String _toEmail(String participantId) =>
       '${participantId.toLowerCase().replaceAll(' ', '-')}@healthresearch.app';
@@ -43,7 +43,6 @@ class SupabaseService {
         'first_name': firstName,
         'last_name': lastName,
         'gender': gender,
-        'age_range': ageRange,
       });
     }
     return res;
@@ -64,12 +63,33 @@ class SupabaseService {
   }
 
   Future<Map<String, dynamic>?> getProfile() async {
-    if (currentUser == null) return null;
-    return await client
-        .from('profiles')
-        .select('participant_id, first_name, last_name, age_range, gender, last_period_start, consent_given')
-        .eq('id', currentUser!.id)
-        .single();
+    if (currentUser == null) {
+      debugPrint('[getProfile] currentUser is null');
+      return null;
+    }
+    try {
+      final result = await client
+          .from('profiles')
+          .select('participant_id, first_name, last_name, gender, last_period_start, consent_given')
+          .eq('id', currentUser!.id)
+          .single();
+      debugPrint('[getProfile] success: $result');
+      return result;
+    } catch (e) {
+      debugPrint('[getProfile] full query failed: $e');
+      try {
+        final result = await client
+            .from('profiles')
+            .select('participant_id, first_name, last_name, gender')
+            .eq('id', currentUser!.id)
+            .single();
+        debugPrint('[getProfile] fallback success: $result');
+        return result;
+      } catch (e2) {
+        debugPrint('[getProfile] fallback also failed: $e2');
+        return null;
+      }
+    }
   }
 
   Future<String?> getParticipantId() async {
@@ -89,7 +109,6 @@ class SupabaseService {
     final updates = <String, dynamic>{};
     if (firstName != null) updates['first_name'] = firstName;
     if (lastName != null) updates['last_name'] = lastName;
-    if (ageRange != null) updates['age_range'] = ageRange;
     if (gender != null) updates['gender'] = gender;
     if (participantId != null) updates['participant_id'] = participantId;
     if (lastPeriodStart != null) {
@@ -112,7 +131,6 @@ class SupabaseService {
     await client.auth.updateUser(UserAttributes(password: newPassword));
   }
 
-  // ── Submissions ───────────────────────────────────────────────────────────
 
   Future<void> saveSubmission({
     required String id,

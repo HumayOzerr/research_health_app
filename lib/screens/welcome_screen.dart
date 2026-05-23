@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../services/api_service.dart';
@@ -5,7 +7,6 @@ import '../services/health_service.dart';
 import '../services/settings_service.dart';
 import '../widgets/app_page_route.dart';
 import '../widgets/fade_slide_in.dart';
-import '../widgets/language_sheet.dart';
 import 'form_screen.dart';
 import 'history_screen.dart';
 import 'settings_screen.dart';
@@ -75,10 +76,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         title: Text(l.appTitle),
         actions: [
           IconButton(
-            icon: const Icon(Icons.language_rounded),
-            onPressed: () => LanguageSheet.show(context, widget.settings),
-          ),
-          IconButton(
             icon: const Icon(Icons.history_rounded),
             tooltip: l.pastSubmissions,
             onPressed: _openHistory,
@@ -98,9 +95,14 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             children: [
               const Spacer(),
               FadeSlideIn(
-                child: Icon(Icons.favorite_rounded, size: 72, color: cs.primary),
+                child: _PulsingHeart(color: cs.primary),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 8),
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 30),
+                child: _EcgLine(color: cs.primary),
+              ),
+              const SizedBox(height: 8),
               FadeSlideIn(
                 delay: const Duration(milliseconds: 60),
                 child: Text(
@@ -198,4 +200,193 @@ class _InfoTile extends StatelessWidget {
       ],
     );
   }
+}
+
+class _PulsingHeart extends StatefulWidget {
+  final Color color;
+  const _PulsingHeart({required this.color});
+
+  @override
+  State<_PulsingHeart> createState() => _PulsingHeartState();
+}
+
+class _PulsingHeartState extends State<_PulsingHeart>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    )..repeat();
+    _scale = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween(begin: 1.0, end: 1.26)
+            .chain(CurveTween(curve: Curves.easeOut)),
+        weight: 30,
+      ),
+      TweenSequenceItem(
+        tween: Tween(begin: 1.26, end: 0.92)
+            .chain(CurveTween(curve: Curves.easeIn)),
+        weight: 12,
+      ),
+      TweenSequenceItem(
+        tween: Tween(begin: 0.92, end: 1.06)
+            .chain(CurveTween(curve: Curves.easeOut)),
+        weight: 10,
+      ),
+      TweenSequenceItem(
+        tween: Tween(begin: 1.06, end: 1.0)
+            .chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 48,
+      ),
+    ]).animate(_ctrl);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _scale,
+      builder: (_, _) => Transform.scale(
+        scale: _scale.value,
+        child: Icon(Icons.favorite_rounded, size: 72, color: widget.color),
+      ),
+    );
+  }
+}
+
+class _EcgLine extends StatefulWidget {
+  final Color color;
+  const _EcgLine({required this.color});
+
+  @override
+  State<_EcgLine> createState() => _EcgLineState();
+}
+
+class _EcgLineState extends State<_EcgLine>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 52,
+      child: RepaintBoundary(
+        child: AnimatedBuilder(
+          animation: _ctrl,
+          builder: (_, _) => CustomPaint(
+            painter: _EcgPainter(
+              progress: _ctrl.value,
+              color: widget.color,
+            ),
+            size: Size.infinite,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EcgPainter extends CustomPainter {
+  final double progress;
+  final Color color;
+
+  const _EcgPainter({required this.progress, required this.color});
+
+  static const _waypoints = [
+    (0.00, 0.00),
+    (0.10, 0.00),
+    (0.14, 0.13),
+    (0.18, 0.00),
+    (0.22, 0.00),
+    (0.26, -0.13),
+    (0.30, 0.00),
+    (0.33,  1.00),
+    (0.36, -0.28),
+    (0.40,  0.00),
+    (0.45,  0.00),
+    (0.50,  0.18),
+    (0.56,  0.18),
+    (0.61,  0.00),
+    (1.00,  0.00),
+  ];
+
+  Path _buildFullPath(Size size) {
+    final cy = size.height / 2;
+    final amp = size.height * 0.44;
+    final path = Path();
+    path.moveTo(_waypoints[0].$1 * size.width, cy - _waypoints[0].$2 * amp);
+    for (int i = 1; i < _waypoints.length; i++) {
+      path.lineTo(_waypoints[i].$1 * size.width, cy - _waypoints[i].$2 * amp);
+    }
+    return path;
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = _buildFullPath(size);
+    final metrics = path.computeMetrics().first;
+    final total = metrics.length;
+
+    final ghostPaint = Paint()
+      ..color = color.withValues(alpha: 0.12)
+      ..strokeWidth = 1.8
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    canvas.drawPath(path, ghostPaint);
+
+    final headDist = total * progress;
+    final tailDist = (headDist - total * 0.32).clamp(0.0, total);
+
+    if (headDist > 0) {
+      final activePath = metrics.extractPath(tailDist, headDist);
+      final activePaint = Paint()
+        ..color = color
+        ..strokeWidth = 2.2
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round;
+      canvas.drawPath(activePath, activePaint);
+    }
+
+    if (headDist > 0 && headDist < total) {
+      final t = metrics.getTangentForOffset(math.min(headDist, total - 0.1));
+      if (t != null) {
+        canvas.drawCircle(
+          t.position,
+          3.5,
+          Paint()
+            ..color = color.withValues(alpha: 0.35)
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+        );
+        canvas.drawCircle(t.position, 2.2, Paint()..color = color);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_EcgPainter old) => old.progress != progress;
 }

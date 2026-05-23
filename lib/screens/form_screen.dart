@@ -27,6 +27,7 @@ class _FormScreenState extends State<FormScreen> {
   String? _ageRange;
   bool _ageFromProfile = false;
   String? _gender;
+  bool _showMenstrual = false;
   bool? _hasPeriod;
   DateTime? _lastPeriodStart;
   bool _lastPeriodStartUpdated = false;
@@ -37,7 +38,6 @@ class _FormScreenState extends State<FormScreen> {
   String _participantId = '';
   bool _profileLoading = true;
 
-  static const _ageRanges = ['18–24', '25–34', '35–44', '45–54', '55–64', '65+'];
 
   @override
   void initState() {
@@ -48,6 +48,7 @@ class _FormScreenState extends State<FormScreen> {
         if (profile != null) {
           _participantId = (profile['participant_id'] as String?) ?? '';
           _gender = profile['gender'] as String?;
+          _showMenstrual = _gender == 'female';
           final saved = profile['age_range'] as String?;
           if (saved != null) {
             _ageRange = saved;
@@ -58,6 +59,9 @@ class _FormScreenState extends State<FormScreen> {
         }
         _profileLoading = false;
       });
+    }).catchError((_) {
+      if (!mounted) return;
+      setState(() => _profileLoading = false);
     });
   }
 
@@ -106,12 +110,12 @@ class _FormScreenState extends State<FormScreen> {
           healthService: widget.healthService,
           healthGranted: widget.healthGranted,
           participantId: _participantId,
-          ageRange: _ageRange!,
+          ageRange: _ageRange ?? '',
           gender: _gender,
-          hasPeriod: _gender == 'female' ? _hasPeriod : null,
-          cycleDay: _gender == 'female' && day > 0 ? day : null,
-          cyclePhase: _gender == 'female' && day > 0 ? _cyclePhase(day) : null,
-          lastPeriodStart: _gender == 'female' ? _lastPeriodStart : null,
+          hasPeriod: _showMenstrual ? _hasPeriod : null,
+          cycleDay: _showMenstrual && day > 0 ? day : null,
+          cyclePhase: _showMenstrual && day > 0 ? _cyclePhase(day) : null,
+          lastPeriodStart: _showMenstrual ? _lastPeriodStart : null,
           wellbeingRating: _rating,
           sleepQuality: _sleepQuality,
           neuropathicPain: _neuropathicPain,
@@ -139,29 +143,6 @@ class _FormScreenState extends State<FormScreen> {
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            FadeSlideIn(
-              child: Text(l.yourInformation,
-                  style: tt.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-            ),
-            if (!_ageFromProfile) ...[
-              const SizedBox(height: 16),
-              FadeSlideIn(
-                delay: const Duration(milliseconds: 60),
-                child: DropdownButtonFormField<String>(
-                  initialValue: _ageRange,
-                  decoration: InputDecoration(
-                    labelText: l.ageRange,
-                    prefixIcon: const Icon(Icons.person_outlined),
-                  ),
-                  items: _ageRanges
-                      .map((r) => DropdownMenuItem(value: r, child: Text(r)))
-                      .toList(),
-                  onChanged: (v) => setState(() => _ageRange = v),
-                  validator: (v) => v == null ? l.ageRangeError : null,
-                ),
-              ),
-            ],
-            const SizedBox(height: 28),
             FadeSlideIn(
               delay: const Duration(milliseconds: 100),
               child: Text(l.sleepQuality,
@@ -247,7 +228,7 @@ class _FormScreenState extends State<FormScreen> {
             if (_gender == 'female') ...[
               const SizedBox(height: 28),
               FadeSlideIn(
-                delay: const Duration(milliseconds: 240),
+                delay: const Duration(milliseconds: 235),
                 child: Text(l.menstrualHealth,
                     style: tt.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
               ),
@@ -456,25 +437,34 @@ class _PhaseInfoCard extends StatelessWidget {
     required this.l,
   });
 
-  static const _phaseData = {
-    'menstrual':  (Color(0xFFB71C1C), Icons.water_drop,        'Progesteron & östrojen en düşük seviyede.'),
-    'follicular': (Color(0xFF2E7D32), Icons.eco_rounded,        'Östrojen yükseliyor, enerji artabilir.'),
-    'ovulatory':  (Color(0xFFF57C00), Icons.wb_sunny_rounded,   'Östrojen zirve noktasında, doğurgan dönem.'),
-    'luteal':     (Color(0xFF4527A0), Icons.nights_stay_rounded, 'Progesteron yükseliyor, spastisite artabilir.'),
-    'late_luteal':(Color(0xFF546E7A), Icons.hourglass_bottom_rounded, 'Hormonlar düşüyor, regl yaklaşıyor.'),
+  static const _phaseStyle = {
+    'menstrual':   (Color(0xFFB71C1C), Icons.water_drop),
+    'follicular':  (Color(0xFF2E7D32), Icons.eco_rounded),
+    'ovulatory':   (Color(0xFFF57C00), Icons.wb_sunny_rounded),
+    'luteal':      (Color(0xFF4527A0), Icons.nights_stay_rounded),
+    'late_luteal': (Color(0xFF546E7A), Icons.hourglass_bottom_rounded),
   };
 
   String _phaseName() => switch (phaseKey) {
-        'menstrual'   => l.phaseMenstrual,
-        'follicular'  => l.phaseFollicular,
-        'ovulatory'   => l.phaseOvulatory,
-        _             => l.phaseLuteal,
+        'menstrual'  => l.phaseMenstrual,
+        'follicular' => l.phaseFollicular,
+        'ovulatory'  => l.phaseOvulatory,
+        _            => l.phaseLuteal,
+      };
+
+  String _phaseDesc() => switch (phaseKey) {
+        'menstrual'  => l.phaseMenstrualDesc,
+        'follicular' => l.phaseFollicularDesc,
+        'ovulatory'  => l.phaseOvulatoryDesc,
+        'luteal'     => l.phaseLutealDesc,
+        _            => l.phaseLateLutealDesc,
       };
 
   @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
-    final (color, icon, desc) = _phaseData[phaseKey] ?? _phaseData['late_luteal']!;
+    final (color, icon) = _phaseStyle[phaseKey] ?? _phaseStyle['late_luteal']!;
+    final desc = _phaseDesc();
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -514,7 +504,6 @@ class _PhaseInfoCard extends StatelessWidget {
   }
 }
 
-// ── Pain card (title + description + 0–10 NRS) ───────────────────────────────
 
 class _PainCard extends StatelessWidget {
   final String title;
@@ -558,7 +547,6 @@ class _PainCard extends StatelessWidget {
   }
 }
 
-// ── 0–10 Numeric Rating Scale selector ───────────────────────────────────────
 
 class _NRSSelector extends StatelessWidget {
   final int value;

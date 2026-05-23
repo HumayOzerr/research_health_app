@@ -4,7 +4,7 @@ import '../l10n/app_localizations.dart';
 import '../services/settings_service.dart';
 import '../services/supabase_service.dart';
 import '../widgets/app_page_route.dart';
-import '../widgets/fade_slide_in.dart';
+import '../widgets/soft_field.dart';
 import 'consent_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -56,7 +56,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       setState(() => _genderError = true);
       return;
     }
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       await SupabaseService().signUp(
         participantId: _idCtrl.text.trim().toUpperCase(),
@@ -69,9 +72,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
-        AppPageRoute(
-          page: ConsentScreen(settings: SettingsService()),
-        ),
+        AppPageRoute(page: ConsentScreen(settings: SettingsService())),
       );
     } on AuthException catch (e) {
       final l = AppLocalizations.of(context);
@@ -92,181 +93,330 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     final l = AppLocalizations.of(context);
+    final onPrimary = cs.onPrimary;
+    final heroDark = Color.lerp(cs.primary, Colors.black, 0.28)!;
 
     return Scaffold(
-      appBar: AppBar(title: Text(l.signUp)),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                FadeSlideIn(
-                  child: TextFormField(
-                    controller: _idCtrl,
-                    decoration: InputDecoration(
-                      labelText: l.participantId,
-                      prefixIcon: const Icon(Icons.badge_outlined),
-                    ),
-                    textCapitalization: TextCapitalization.characters,
-                    validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? l.participantIdError : null,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                FadeSlideIn(
-                  delay: const Duration(milliseconds: 60),
-                  child: TextFormField(
-                    controller: _firstNameCtrl,
-                    decoration: InputDecoration(
-                      labelText: l.firstName,
-                      prefixIcon: const Icon(Icons.person_outlined),
-                    ),
-                    textCapitalization: TextCapitalization.words,
-                    validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? l.firstNameError : null,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                FadeSlideIn(
-                  delay: const Duration(milliseconds: 80),
-                  child: TextFormField(
-                    controller: _lastNameCtrl,
-                    decoration: InputDecoration(
-                      labelText: l.lastName,
-                      prefixIcon: const Icon(Icons.person_outlined),
-                    ),
-                    textCapitalization: TextCapitalization.words,
-                    validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? l.lastNameError : null,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                FadeSlideIn(
-                  delay: const Duration(milliseconds: 90),
-                  child: _GenderSelector(
-                    selected: _gender,
-                    hasError: _genderError,
-                    onSelected: (v) =>
-                        setState(() { _gender = v; _genderError = false; }),
-                    l: l,
-                    cs: cs,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                FadeSlideIn(
-                  delay: const Duration(milliseconds: 95),
-                  child: DropdownButtonFormField<String>(
-                    initialValue: _ageRange,
-                    decoration: InputDecoration(
-                      labelText: l.ageRange,
-                      prefixIcon: const Icon(Icons.cake_outlined),
-                    ),
-                    items: _ageRanges
-                        .map((r) => DropdownMenuItem(value: r, child: Text(r)))
-                        .toList(),
-                    onChanged: (v) => setState(() => _ageRange = v),
-                    validator: (v) => v == null ? l.ageRangeError : null,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                FadeSlideIn(
-                  delay: const Duration(milliseconds: 100),
-                  child: TextFormField(
-                    controller: _passwordCtrl,
-                    obscureText: _obscure,
-                    onChanged: (v) => setState(() => _password = v),
-                    decoration: InputDecoration(
-                      labelText: l.password,
-                      prefixIcon: const Icon(Icons.lock_outlined),
-                      suffixIcon: IconButton(
-                        icon: Icon(_obscure
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined),
-                        onPressed: () => setState(() => _obscure = !_obscure),
-                      ),
-                    ),
-                    validator: (v) =>
-                        !_passwordValid ? l.passwordError : null,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                FadeSlideIn(
-                  delay: const Duration(milliseconds: 120),
-                  child: _PasswordChecklist(
-                    hasLength: _hasLength,
-                    hasUpper: _hasUpper,
-                    hasLower: _hasLower,
-                    hasDigit: _hasDigit,
-                    hasSpecial: _hasSpecial,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                FadeSlideIn(
-                  delay: const Duration(milliseconds: 140),
-                  child: TextFormField(
-                    controller: _confirmCtrl,
-                    obscureText: _obscureConfirm,
-                    decoration: InputDecoration(
-                      labelText: l.confirmPassword,
-                      prefixIcon: const Icon(Icons.lock_outlined),
-                      suffixIcon: IconButton(
-                        icon: Icon(_obscureConfirm
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined),
-                        onPressed: () =>
-                            setState(() => _obscureConfirm = !_obscureConfirm),
-                      ),
-                    ),
-                    validator: (v) =>
-                        v != _passwordCtrl.text ? l.confirmPasswordError : null,
-                  ),
-                ),
-                if (_error != null) ...[
-                  const SizedBox(height: 12),
-                  FadeSlideIn(
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: cs.errorContainer,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(_error!,
-                          style: tt.bodySmall
-                              ?.copyWith(color: cs.onErrorContainer)),
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 24),
-                FadeSlideIn(
-                  delay: const Duration(milliseconds: 180),
-                  child: FilledButton(
-                    onPressed: _loading ? null : _register,
-                    child: _loading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white),
-                          )
-                        : Text(l.signUp),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                FadeSlideIn(
-                  delay: const Duration(milliseconds: 220),
-                  child: TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text(l.haveAccount),
-                  ),
-                ),
-              ],
+      resizeToAvoidBottomInset: false,
+      body: Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [heroDark, cs.primary],
+              ),
             ),
           ),
+          Column(
+            children: [
+              SafeArea(
+                bottom: false,
+                child: SizedBox(
+                  height: 180,
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        top: 4,
+                        left: 4,
+                        child: IconButton(
+                          icon: Icon(Icons.arrow_back_rounded,
+                              color: onPrimary.withValues(alpha: 0.8)),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ),
+                      Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.person_add_rounded, size: 56, color: onPrimary),
+                            const SizedBox(height: 10),
+                            Text(
+                              l.signUp,
+                              style: tt.headlineMedium?.copyWith(
+                                color: onPrimary,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'SCI & AI Lab · ETH Zurich',
+                              style: tt.labelMedium?.copyWith(
+                                color: onPrimary.withValues(alpha: 0.65),
+                                letterSpacing: 0.3,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: cs.surface,
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(32)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.18),
+                        blurRadius: 24,
+                        offset: const Offset(0, -6),
+                      ),
+                    ],
+                  ),
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.fromLTRB(
+                      28,
+                      32,
+                      28,
+                      MediaQuery.of(context).viewInsets.bottom + 32,
+                    ),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          SoftField(
+                            controller: _idCtrl,
+                            label: l.participantId,
+                            icon: Icons.badge_outlined,
+                            textCapitalization: TextCapitalization.characters,
+                            textInputAction: TextInputAction.next,
+                            validator: (v) => (v == null || v.trim().isEmpty)
+                                ? l.participantIdError
+                                : null,
+                          ),
+                          const SizedBox(height: 14),
+                          SoftField(
+                            controller: _firstNameCtrl,
+                            label: l.firstName,
+                            icon: Icons.person_outlined,
+                            textCapitalization: TextCapitalization.words,
+                            textInputAction: TextInputAction.next,
+                            validator: (v) => (v == null || v.trim().isEmpty)
+                                ? l.firstNameError
+                                : null,
+                          ),
+                          const SizedBox(height: 14),
+                          SoftField(
+                            controller: _lastNameCtrl,
+                            label: l.lastName,
+                            icon: Icons.person_outlined,
+                            textCapitalization: TextCapitalization.words,
+                            textInputAction: TextInputAction.next,
+                            validator: (v) => (v == null || v.trim().isEmpty)
+                                ? l.lastNameError
+                                : null,
+                          ),
+                          const SizedBox(height: 14),
+                          _GenderSelector(
+                            selected: _gender,
+                            hasError: _genderError,
+                            onSelected: (v) =>
+                                setState(() {
+                                  _gender = v;
+                                  _genderError = false;
+                                }),
+                            l: l,
+                            cs: cs,
+                          ),
+                          const SizedBox(height: 14),
+                          _SoftDropdown(
+                            value: _ageRange,
+                            label: l.ageRange,
+                            icon: Icons.cake_outlined,
+                            items: _ageRanges,
+                            onChanged: (v) => setState(() => _ageRange = v),
+                            validator: (v) => v == null ? l.ageRangeError : null,
+                            cs: cs,
+                            tt: tt,
+                          ),
+                          const SizedBox(height: 14),
+                          SoftField(
+                            controller: _passwordCtrl,
+                            label: l.password,
+                            icon: Icons.lock_outline_rounded,
+                            obscureText: _obscure,
+                            textInputAction: TextInputAction.next,
+                            onChanged: (v) => setState(() => _password = v),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscure
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                                size: 20,
+                                color: cs.onSurfaceVariant,
+                              ),
+                              onPressed: () =>
+                                  setState(() => _obscure = !_obscure),
+                            ),
+                            validator: (v) =>
+                                !_passwordValid ? l.passwordError : null,
+                          ),
+                          const SizedBox(height: 8),
+                          _PasswordChecklist(
+                            hasLength: _hasLength,
+                            hasUpper: _hasUpper,
+                            hasLower: _hasLower,
+                            hasDigit: _hasDigit,
+                            hasSpecial: _hasSpecial,
+                          ),
+                          const SizedBox(height: 14),
+                          SoftField(
+                            controller: _confirmCtrl,
+                            label: l.confirmPassword,
+                            icon: Icons.lock_outline_rounded,
+                            obscureText: _obscureConfirm,
+                            textInputAction: TextInputAction.done,
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscureConfirm
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                                size: 20,
+                                color: cs.onSurfaceVariant,
+                              ),
+                              onPressed: () => setState(
+                                  () => _obscureConfirm = !_obscureConfirm),
+                            ),
+                            validator: (v) => v != _passwordCtrl.text
+                                ? l.confirmPasswordError
+                                : null,
+                          ),
+                          if (_error != null) ...[
+                            const SizedBox(height: 14),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 12),
+                              decoration: BoxDecoration(
+                                color: cs.errorContainer,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.error_outline_rounded,
+                                      size: 18, color: cs.onErrorContainer),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(_error!,
+                                        style: tt.bodySmall?.copyWith(
+                                            color: cs.onErrorContainer)),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 28),
+                          FilledButton(
+                            onPressed: _loading ? null : _register,
+                            style: FilledButton.styleFrom(
+                              minimumSize: const Size.fromHeight(52),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14)),
+                            ),
+                            child: _loading
+                                ? const SizedBox(
+                                    height: 22,
+                                    width: 22,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2, color: Colors.white),
+                                  )
+                                : Text(l.signUp,
+                                    style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600)),
+                          ),
+                          const SizedBox(height: 12),
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text(l.haveAccount),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SoftDropdown extends StatelessWidget {
+  final String? value;
+  final String label;
+  final IconData icon;
+  final List<String> items;
+  final ValueChanged<String?> onChanged;
+  final String? Function(String?)? validator;
+  final ColorScheme cs;
+  final TextTheme tt;
+
+  const _SoftDropdown({
+    required this.value,
+    required this.label,
+    required this.icon,
+    required this.items,
+    required this.onChanged,
+    this.validator,
+    required this.cs,
+    required this.tt,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final fillColor = cs.surfaceContainerHighest.withValues(alpha: 0.6);
+    final radius = BorderRadius.circular(18);
+
+    return DropdownButtonFormField<String>(
+      initialValue: value,
+      style: tt.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+        floatingLabelStyle: tt.labelMedium?.copyWith(
+          color: cs.primary,
+          fontWeight: FontWeight.w600,
+        ),
+        prefixIcon: Icon(icon, size: 20, color: cs.onSurfaceVariant),
+        filled: true,
+        fillColor: fillColor,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        border: OutlineInputBorder(
+          borderRadius: radius,
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: radius,
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: radius,
+          borderSide: BorderSide(color: cs.primary, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: radius,
+          borderSide: BorderSide(color: cs.error, width: 1.5),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: radius,
+          borderSide: BorderSide(color: cs.error, width: 2),
         ),
       ),
+      items: items
+          .map((r) => DropdownMenuItem(value: r, child: Text(r)))
+          .toList(),
+      onChanged: onChanged,
+      validator: validator,
     );
   }
 }
@@ -302,39 +452,55 @@ class _GenderSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = hasError ? cs.error : cs.outlineVariant;
+    final fillColor = cs.surfaceContainerHighest.withValues(alpha: 0.6);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          l.gender,
-          style: Theme.of(context)
-              .textTheme
-              .bodySmall
-              ?.copyWith(color: hasError ? cs.error : cs.onSurfaceVariant),
-        ),
-        const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            border: Border.all(color: borderColor),
-            borderRadius: BorderRadius.circular(12),
+            color: fillColor,
+            borderRadius: BorderRadius.circular(18),
+            border: hasError
+                ? Border.all(color: cs.error, width: 1.5)
+                : null,
           ),
-          padding: const EdgeInsets.all(8),
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _options.map((opt) {
-              final (code, icon) = opt;
-              final isSelected = selected == code;
-              return ChoiceChip(
-                avatar: Icon(icon,
-                    size: 16,
-                    color: isSelected ? cs.onSecondaryContainer : cs.onSurfaceVariant),
-                label: Text(_label(code, l)),
-                selected: isSelected,
-                onSelected: (_) => onSelected(code),
-              );
-            }).toList(),
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.wc_rounded, size: 20, color: cs.onSurfaceVariant),
+                  const SizedBox(width: 12),
+                  Text(
+                    l.gender,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: hasError ? cs.error : cs.onSurfaceVariant,
+                        ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _options.map((opt) {
+                  final (code, icon) = opt;
+                  final isSelected = selected == code;
+                  return ChoiceChip(
+                    avatar: Icon(icon,
+                        size: 16,
+                        color: isSelected
+                            ? cs.onSecondaryContainer
+                            : cs.onSurfaceVariant),
+                    label: Text(_label(code, l)),
+                    selected: isSelected,
+                    onSelected: (_) => onSelected(code),
+                  );
+                }).toList(),
+              ),
+            ],
           ),
         ),
         if (hasError) ...[
@@ -376,7 +542,9 @@ class _PasswordChecklist extends StatelessWidget {
         _Item(met: hasUpper, label: 'At least one uppercase letter (A–Z)'),
         _Item(met: hasLower, label: 'At least one lowercase letter (a–z)'),
         _Item(met: hasDigit, label: 'At least one number (0–9)'),
-        _Item(met: hasSpecial, label: 'At least one special character (!@#\$...)'),
+        _Item(
+            met: hasSpecial,
+            label: 'At least one special character (!@#\$...)'),
       ],
     );
   }
@@ -399,7 +567,9 @@ class _Item extends StatelessWidget {
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 200),
             child: Icon(
-              met ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+              met
+                  ? Icons.check_circle_rounded
+                  : Icons.radio_button_unchecked_rounded,
               key: ValueKey(met),
               size: 16,
               color: color,
@@ -407,10 +577,8 @@ class _Item extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Text(label,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: color)),
+              style:
+                  Theme.of(context).textTheme.bodySmall?.copyWith(color: color)),
         ],
       ),
     );

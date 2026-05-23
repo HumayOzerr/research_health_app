@@ -40,7 +40,6 @@ class SettingsScreen extends StatelessWidget {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              // ── ACCOUNT ──────────────────────────────────────────────
               FadeSlideIn(
                 child: _SectionHeader(label: l.account, tt: tt, cs: cs),
               ),
@@ -67,7 +66,6 @@ class SettingsScreen extends StatelessWidget {
               ),
               const SizedBox(height: 28),
 
-              // ── APPEARANCE ───────────────────────────────────────────
               FadeSlideIn(
                 delay: const Duration(milliseconds: 80),
                 child: _SectionHeader(label: l.appearance, tt: tt, cs: cs),
@@ -106,7 +104,6 @@ class SettingsScreen extends StatelessWidget {
               ),
               const SizedBox(height: 28),
 
-              // ── LANGUAGE ─────────────────────────────────────────────
               FadeSlideIn(
                 delay: const Duration(milliseconds: 120),
                 child: _SectionHeader(label: l.language, tt: tt, cs: cs),
@@ -147,7 +144,6 @@ class SettingsScreen extends StatelessWidget {
               ),
               const SizedBox(height: 28),
 
-              // ── SIGN OUT ─────────────────────────────────────────────
               FadeSlideIn(
                 delay: const Duration(milliseconds: 180),
                 child: Card(
@@ -201,7 +197,6 @@ class SettingsScreen extends StatelessWidget {
   }
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
 
 class _SectionHeader extends StatelessWidget {
   final String label;

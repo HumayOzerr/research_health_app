@@ -6,7 +6,6 @@ class StorageService {
 
   Future<SharedPreferences> get _prefs => SharedPreferences.getInstance();
 
-  // Save a submission. status = 'submitted' | 'pending'
   Future<void> saveSubmission(Map<String, dynamic> json, {required String status}) async {
     final prefs = await _prefs;
     final history = prefs.getStringList(_historyKey) ?? [];
@@ -16,7 +15,6 @@ class StorageService {
     await prefs.setStringList(_historyKey, history);
   }
 
-  // Update the status of a submission by its ID
   Future<void> updateStatus(String submissionId, String newStatus) async {
     final prefs = await _prefs;
     final history = prefs.getStringList(_historyKey) ?? [];
@@ -32,14 +30,12 @@ class StorageService {
     await prefs.setStringList(_historyKey, history);
   }
 
-  // All submissions, newest first
   Future<List<Map<String, dynamic>>> getHistory() async {
     final prefs = await _prefs;
     final history = prefs.getStringList(_historyKey) ?? [];
     return history.map((s) => jsonDecode(s) as Map<String, dynamic>).toList();
   }
 
-  // Only submissions still waiting to be sent
   Future<List<Map<String, dynamic>>> getPendingSubmissions() async {
     final all = await getHistory();
     return all.where((e) => e['status'] == 'pending').toList();

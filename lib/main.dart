@@ -41,7 +41,7 @@ class ResearchHealthApp extends StatelessWidget {
           home = ConsentScreen(settings: settings);
         }
         return MaterialApp(
-          title: 'Health Research Study',
+          title: 'Healife',
           theme: AppTheme.light,
           darkTheme: AppTheme.dark,
           themeMode: settings.themeMode,

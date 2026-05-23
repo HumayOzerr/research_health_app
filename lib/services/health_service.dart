@@ -33,7 +33,6 @@ class HealthService {
     }
   }
 
-  // Most recent heart rate reading in the last 24 hours (BPM)
   Future<double?> getLatestHeartRate() async {
     final now = DateTime.now();
     final yesterday = now.subtract(const Duration(hours: 24));
@@ -50,7 +49,6 @@ class HealthService {
     }
   }
 
-  // Total sleep duration last night in hours (6 pm yesterday → noon today)
   Future<double?> getLastNightSleep() async {
     final now = DateTime.now();
     final start = DateTime(now.year, now.month, now.day - 1, 18, 0);
@@ -72,7 +70,6 @@ class HealthService {
     }
   }
 
-  // Total active energy burned today in kcal
   Future<double?> getTodayActiveEnergy() async {
     final now = DateTime.now();
     final midnight = DateTime(now.year, now.month, now.day);
@@ -92,7 +89,6 @@ class HealthService {
     }
   }
 
-  // Step count for each of the last 7 days
   Future<List<({DateTime date, int steps})>> getLast7DaysSteps() async {
     final now = DateTime.now();
     final results = <({DateTime date, int steps})>[];

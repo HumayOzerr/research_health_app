@@ -72,7 +72,6 @@ class _ResultScreenState extends State<ResultScreen> {
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          // ── Status ────────────────────────────────────────────────────
           FadeSlideIn(
             child: Icon(icon, size: 72, color: iconColor),
           ),
@@ -121,7 +120,6 @@ class _ResultScreenState extends State<ResultScreen> {
             ),
           ],
 
-          // ── Summary cards ─────────────────────────────────────────────
           const SizedBox(height: 28),
           FadeSlideIn(
             delay: const Duration(milliseconds: 160),
@@ -206,7 +204,6 @@ class _ResultScreenState extends State<ResultScreen> {
             ),
           ),
 
-          // ── Technical details ─────────────────────────────────────────
           const SizedBox(height: 24),
           FadeSlideIn(
             delay: const Duration(milliseconds: 340),
@@ -265,7 +262,6 @@ class _ResultScreenState extends State<ResultScreen> {
             ),
           ],
 
-          // ── Start over ────────────────────────────────────────────────
           const SizedBox(height: 32),
           FadeSlideIn(
             delay: const Duration(milliseconds: 380),
@@ -286,7 +282,6 @@ class _ResultScreenState extends State<ResultScreen> {
   }
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
 
 class _SummaryRow extends StatelessWidget {
   final IconData icon;
@@ -369,14 +364,14 @@ class _MetricRow extends StatelessWidget {
     'step_count': Icons.directions_walk_rounded,
     'heart_rate': Icons.favorite_rounded,
     'sleep_duration': Icons.bedtime_rounded,
-    'active_energy': Icons.local_fire_department_rounded,
+    'active_energy_burned': Icons.local_fire_department_rounded,
   };
 
   String _label(String type) => switch (type) {
         'step_count' => l.labelStepsToday,
         'heart_rate' => l.labelHeartRate,
         'sleep_duration' => l.labelSleep,
-        'active_energy' => l.labelActiveEnergy,
+        'active_energy_burned' => l.labelActiveEnergy,
         _ => type,
       };
 
