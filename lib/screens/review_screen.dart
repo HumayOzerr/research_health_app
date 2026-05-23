@@ -2,9 +2,12 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
+import '../l10n/app_localizations.dart';
 import '../models/submission.dart';
 import '../services/api_service.dart';
 import '../services/health_service.dart';
+import '../widgets/app_page_route.dart';
+import '../widgets/fade_slide_in.dart';
 import 'result_screen.dart';
 
 class ReviewScreen extends StatefulWidget {
@@ -31,21 +34,36 @@ class ReviewScreen extends StatefulWidget {
 
 class _ReviewScreenState extends State<ReviewScreen> {
   int? _steps;
-  bool _loadingSteps = true;
+  double? _heartRate;
+  double? _sleepHours;
+  double? _activeEnergy;
+  bool _loadingHealth = true;
   bool _submitting = false;
 
   @override
   void initState() {
     super.initState();
-    _fetchSteps();
+    _fetchHealthData();
   }
 
-  Future<void> _fetchSteps() async {
+  Future<void> _fetchHealthData() async {
     if (widget.healthGranted) {
-      final steps = await widget.healthService.getTodaySteps();
-      if (mounted) setState(() => _steps = steps);
+      final results = await Future.wait([
+        widget.healthService.getTodaySteps(),
+        widget.healthService.getLatestHeartRate(),
+        widget.healthService.getLastNightSleep(),
+        widget.healthService.getTodayActiveEnergy(),
+      ]);
+      if (mounted) {
+        setState(() {
+          _steps = results[0] as int?;
+          _heartRate = results[1] as double?;
+          _sleepHours = results[2] as double?;
+          _activeEnergy = results[3] as double?;
+        });
+      }
     }
-    if (mounted) setState(() => _loadingSteps = false);
+    if (mounted) setState(() => _loadingHealth = false);
   }
 
   Future<void> _submit() async {
@@ -59,16 +77,23 @@ class _ReviewScreenState extends State<ReviewScreen> {
       wellbeingRating: widget.wellbeingRating,
       comment: widget.comment,
       stepCount: _steps,
+      heartRateBpm: _heartRate,
+      sleepHours: _sleepHours,
+      activeEnergyKcal: _activeEnergy,
     );
 
     final payload = const JsonEncoder.withIndent('  ').convert(submission.toJson());
-    final success = await ApiService().submit(submission);
+    final result = await ApiService().submit(submission);
 
     if (!mounted) return;
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(
-        builder: (_) => ResultScreen(success: success, payload: payload),
+      AppPageRoute(
+        page: ResultScreen(
+          success: result.success,
+          queued: result.queued,
+          payload: payload,
+        ),
       ),
     );
   }
@@ -77,66 +102,96 @@ class _ReviewScreenState extends State<ReviewScreen> {
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
     final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Review')),
+      appBar: AppBar(title: Text(l.reviewTitle)),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          Text(
-            'Please confirm your data before submitting.',
-            style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+          FadeSlideIn(
+            child: Text(
+              l.reviewConfirm,
+              style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+            ),
           ),
           const SizedBox(height: 20),
-          _SectionCard(
-            title: 'Participant',
-            icon: Icons.badge_outlined,
-            children: [
-              _Row('ID', widget.participantId),
-              _Row('Age Range', widget.ageRange),
-            ],
+          FadeSlideIn(
+            delay: const Duration(milliseconds: 60),
+            child: _SectionCard(
+              title: l.participant,
+              icon: Icons.badge_outlined,
+              children: [
+                _Row(l.labelId, widget.participantId),
+                _Row(l.ageRange, widget.ageRange),
+              ],
+            ),
           ),
           const SizedBox(height: 12),
-          _SectionCard(
-            title: 'Wellbeing',
-            icon: Icons.self_improvement_rounded,
-            children: [
-              _Row('Rating', '${widget.wellbeingRating} / 5'),
-              if (widget.comment.isNotEmpty) _Row('Comment', widget.comment),
-            ],
+          FadeSlideIn(
+            delay: const Duration(milliseconds: 100),
+            child: _SectionCard(
+              title: l.wellbeing,
+              icon: Icons.self_improvement_rounded,
+              children: [
+                _Row(l.labelRating, '${widget.wellbeingRating} / 5'),
+                if (widget.comment.isNotEmpty) _Row(l.labelComment, widget.comment),
+              ],
+            ),
           ),
           const SizedBox(height: 12),
-          _SectionCard(
-            title: 'Health Metrics',
-            icon: Icons.directions_walk_rounded,
-            children: [
-              if (_loadingSteps)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                )
-              else if (!widget.healthGranted)
-                _Row('Steps today', 'Permission not granted')
-              else
-                _Row('Steps today', _steps != null ? '$_steps steps' : 'No data available'),
-            ],
+          FadeSlideIn(
+            delay: const Duration(milliseconds: 140),
+            child: _SectionCard(
+              title: l.healthMetrics,
+              icon: Icons.monitor_heart_outlined,
+              children: _loadingHealth
+                  ? [
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                      )
+                    ]
+                  : !widget.healthGranted
+                      ? [_Row(l.labelId, l.permissionNotGranted)]
+                      : [
+                          _Row(l.labelStepsToday,
+                              _steps != null ? '$_steps steps' : l.noData),
+                          _Row(l.labelHeartRate,
+                              _heartRate != null ? '${_heartRate!.round()} bpm' : l.noData),
+                          _Row(l.labelSleep,
+                              _sleepHours != null
+                                  ? '${_sleepHours!.toStringAsFixed(1)} h'
+                                  : l.noData),
+                          _Row(l.labelActiveEnergy,
+                              _activeEnergy != null
+                                  ? '${_activeEnergy!.round()} kcal'
+                                  : l.noData),
+                        ],
+            ),
           ),
           const SizedBox(height: 32),
-          FilledButton(
-            onPressed: (_submitting || _loadingSteps) ? null : _submit,
-            child: _submitting
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                  )
-                : const Text('Submit'),
+          FadeSlideIn(
+            delay: const Duration(milliseconds: 180),
+            child: FilledButton(
+              onPressed: (_submitting || _loadingHealth) ? null : _submit,
+              child: _submitting
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : Text(l.submit),
+            ),
           ),
           const SizedBox(height: 12),
-          Text(
-            'Data will be sent to a mock research endpoint (httpbin.org).',
-            style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
-            textAlign: TextAlign.center,
+          FadeSlideIn(
+            delay: const Duration(milliseconds: 220),
+            child: Text(
+              l.reviewEndpointNote,
+              style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
+              textAlign: TextAlign.center,
+            ),
           ),
         ],
       ),
@@ -196,7 +251,7 @@ class _Row extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 100,
+            width: 120,
             child: Text(label,
                 style: tt.bodySmall?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,

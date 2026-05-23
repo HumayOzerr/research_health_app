@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../services/health_service.dart';
+import '../widgets/app_page_route.dart';
+import '../widgets/fade_slide_in.dart';
 import 'review_screen.dart';
 
 class FormScreen extends StatefulWidget {
@@ -24,9 +27,7 @@ class _FormScreenState extends State<FormScreen> {
   String? _ageRange;
   int _rating = 3;
 
-  static const _ageRanges = [
-    '18–24', '25–34', '35–44', '45–54', '55–64', '65+'
-  ];
+  static const _ageRanges = ['18–24', '25–34', '35–44', '45–54', '55–64', '65+'];
 
   @override
   void dispose() {
@@ -39,8 +40,8 @@ class _FormScreenState extends State<FormScreen> {
     if (!_formKey.currentState!.validate()) return;
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => ReviewScreen(
+      AppPageRoute(
+        page: ReviewScreen(
           healthService: widget.healthService,
           healthGranted: widget.healthGranted,
           participantId: _idController.text.trim(),
@@ -56,68 +57,100 @@ class _FormScreenState extends State<FormScreen> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final l = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Questionnaire')),
+      appBar: AppBar(title: Text(l.formTitle)),
       body: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            Text('Your Information', style: tt.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _idController,
-              decoration: const InputDecoration(
-                labelText: 'Participant ID',
-                hintText: 'e.g. P-001',
-                prefixIcon: Icon(Icons.badge_outlined),
-              ),
-              textCapitalization: TextCapitalization.characters,
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Please enter your participant ID' : null,
+            FadeSlideIn(
+              child: Text(l.yourInformation,
+                  style: tt.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
             ),
             const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              initialValue: _ageRange,
-              decoration: const InputDecoration(
-                labelText: 'Age Range',
-                prefixIcon: Icon(Icons.person_outlined),
+            FadeSlideIn(
+              delay: const Duration(milliseconds: 60),
+              child: TextFormField(
+                controller: _idController,
+                decoration: InputDecoration(
+                  labelText: l.participantId,
+                  hintText: l.participantIdHint,
+                  prefixIcon: const Icon(Icons.badge_outlined),
+                ),
+                textCapitalization: TextCapitalization.characters,
+                validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? l.participantIdError : null,
               ),
-              items: _ageRanges
-                  .map((r) => DropdownMenuItem(value: r, child: Text(r)))
-                  .toList(),
-              onChanged: (v) => setState(() => _ageRange = v),
-              validator: (v) => v == null ? 'Please select your age range' : null,
+            ),
+            const SizedBox(height: 16),
+            FadeSlideIn(
+              delay: const Duration(milliseconds: 100),
+              child: DropdownButtonFormField<String>(
+                initialValue: _ageRange,
+                decoration: InputDecoration(
+                  labelText: l.ageRange,
+                  prefixIcon: const Icon(Icons.person_outlined),
+                ),
+                items: _ageRanges
+                    .map((r) => DropdownMenuItem(value: r, child: Text(r)))
+                    .toList(),
+                onChanged: (v) => setState(() => _ageRange = v),
+                validator: (v) => v == null ? l.ageRangeError : null,
+              ),
             ),
             const SizedBox(height: 28),
-            Text('Wellbeing Rating', style: tt.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            FadeSlideIn(
+              delay: const Duration(milliseconds: 140),
+              child: Text(l.wellbeingRating,
+                  style: tt.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            ),
             const SizedBox(height: 8),
-            Text(
-              'How do you feel today overall? (1 = very poor, 5 = excellent)',
-              style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+            FadeSlideIn(
+              delay: const Duration(milliseconds: 160),
+              child: Text(
+                l.wellbeingQuestion,
+                style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+              ),
             ),
             const SizedBox(height: 16),
-            _RatingSelector(
-              value: _rating,
-              onChanged: (v) => setState(() => _rating = v),
+            FadeSlideIn(
+              delay: const Duration(milliseconds: 200),
+              child: _RatingSelector(
+                value: _rating,
+                onChanged: (v) => setState(() => _rating = v),
+                l: l,
+              ),
             ),
             const SizedBox(height: 28),
-            Text('Comments', style: tt.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            FadeSlideIn(
+              delay: const Duration(milliseconds: 240),
+              child: Text(l.comments,
+                  style: tt.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            ),
             const SizedBox(height: 16),
-            TextFormField(
-              controller: _commentController,
-              decoration: const InputDecoration(
-                labelText: 'Short comment (optional)',
-                hintText: 'e.g. Felt energetic in the morning.',
-                alignLabelWithHint: true,
+            FadeSlideIn(
+              delay: const Duration(milliseconds: 280),
+              child: TextFormField(
+                controller: _commentController,
+                decoration: InputDecoration(
+                  labelText: l.commentLabel,
+                  hintText: l.commentHint,
+                  alignLabelWithHint: true,
+                ),
+                maxLines: 3,
+                maxLength: 200,
               ),
-              maxLines: 3,
-              maxLength: 200,
             ),
             const SizedBox(height: 24),
-            FilledButton(
-              onPressed: _onContinue,
-              child: const Text('Review & Submit'),
+            FadeSlideIn(
+              delay: const Duration(milliseconds: 320),
+              child: FilledButton(
+                onPressed: _onContinue,
+                child: Text(l.reviewAndSubmit),
+              ),
             ),
           ],
         ),
@@ -129,10 +162,10 @@ class _FormScreenState extends State<FormScreen> {
 class _RatingSelector extends StatelessWidget {
   final int value;
   final ValueChanged<int> onChanged;
+  final AppLocalizations l;
 
-  const _RatingSelector({required this.value, required this.onChanged});
+  const _RatingSelector({required this.value, required this.onChanged, required this.l});
 
-  static const _labels = {1: 'Very Poor', 2: 'Poor', 3: 'Fair', 4: 'Good', 5: 'Excellent'};
   static const _colors = {
     1: Color(0xFFD32F2F),
     2: Color(0xFFF57C00),
@@ -140,6 +173,14 @@ class _RatingSelector extends StatelessWidget {
     4: Color(0xFF388E3C),
     5: Color(0xFF1B5E20),
   };
+
+  String _label(int n) => switch (n) {
+        1 => l.ratingVeryPoor,
+        2 => l.ratingPoor,
+        3 => l.ratingFair,
+        4 => l.ratingGood,
+        _ => l.ratingExcellent,
+      };
 
   @override
   Widget build(BuildContext context) {
@@ -154,9 +195,10 @@ class _RatingSelector extends StatelessWidget {
             return GestureDetector(
               onTap: () => onChanged(n),
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                width: 52,
-                height: 52,
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOutCubic,
+                width: selected ? 58 : 52,
+                height: selected ? 58 : 52,
                 decoration: BoxDecoration(
                   color: selected ? color : color.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
@@ -164,6 +206,9 @@ class _RatingSelector extends StatelessWidget {
                     color: selected ? color : color.withValues(alpha: 0.4),
                     width: selected ? 2.5 : 1.5,
                   ),
+                  boxShadow: selected
+                      ? [BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 8, offset: const Offset(0, 2))]
+                      : [],
                 ),
                 alignment: Alignment.center,
                 child: Text(
@@ -179,11 +224,12 @@ class _RatingSelector extends StatelessWidget {
           }),
         ),
         const SizedBox(height: 8),
-        Text(
-          _labels[value]!,
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            color: _colors[value],
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          child: Text(
+            _label(value),
+            key: ValueKey(value),
+            style: TextStyle(fontWeight: FontWeight.w600, color: _colors[value]),
           ),
         ),
       ],

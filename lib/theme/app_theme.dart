@@ -4,12 +4,12 @@ class AppTheme {
   static const _primary = Color(0xFF1565C0);
   static const _secondary = Color(0xFF546E7A);
 
-  static ThemeData get light => ThemeData(
+  static ThemeData _base(Brightness brightness) => ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
           seedColor: _primary,
           secondary: _secondary,
-          brightness: Brightness.light,
+          brightness: brightness,
         ),
         appBarTheme: const AppBarTheme(
           centerTitle: true,
@@ -34,4 +34,7 @@ class AppTheme {
           ),
         ),
       );
+
+  static ThemeData get light => _base(Brightness.light);
+  static ThemeData get dark => _base(Brightness.dark);
 }
