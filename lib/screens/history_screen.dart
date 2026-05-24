@@ -170,11 +170,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
             FadeSlideIn(
               child: _ChartCard(
                 icon: Icons.self_improvement_rounded,
-                title: 'Wellbeing & Sleep Quality',
+                title: l.chartWellbeingSleep,
                 color: cs.primary,
                 legend: [
-                  if (wellbeing.isNotEmpty) _LegendDot(color: cs.primary, label: 'Wellbeing'),
-                  if (sleepQ.isNotEmpty) const _LegendDot(color: c1, label: 'Sleep quality', dashed: true),
+                  if (wellbeing.isNotEmpty) _LegendDot(color: cs.primary, label: l.wellbeing),
+                  if (sleepQ.isNotEmpty) _LegendDot(color: c1, label: l.sleepQuality, dashed: true),
                 ],
                 child: _MultiLineChart(
                   series: [
@@ -195,11 +195,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
               delay: const Duration(milliseconds: 40),
               child: _ChartCard(
                 icon: Icons.electric_bolt_rounded,
-                title: 'Pain Levels',
+                title: l.chartPainLevels,
                 color: cNeuro,
                 legend: [
-                  if (neuro.isNotEmpty) const _LegendDot(color: cNeuro, label: 'Neuropathic'),
-                  if (musculo.isNotEmpty) const _LegendDot(color: cMusculo, label: 'Musculoskeletal', dashed: true),
+                  if (neuro.isNotEmpty) _LegendDot(color: cNeuro, label: l.legendNeuropathic),
+                  if (musculo.isNotEmpty) _LegendDot(color: cMusculo, label: l.legendMusculoskeletal, dashed: true),
                 ],
                 child: _MultiLineChart(
                   series: [
@@ -233,11 +233,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
               delay: const Duration(milliseconds: 80),
               child: _ChartCard(
                 icon: Icons.favorite_rounded,
-                title: 'Heart Rate',
+                title: l.labelHeartRate,
                 color: cHr,
                 legend: [
-                  if (hr.isNotEmpty) const _LegendDot(color: cHr, label: 'Active'),
-                  if (restHr.isNotEmpty) const _LegendDot(color: cRestHr, label: 'Resting', dashed: true),
+                  if (hr.isNotEmpty) _LegendDot(color: cHr, label: l.legendActive),
+                  if (restHr.isNotEmpty) _LegendDot(color: cRestHr, label: l.legendResting, dashed: true),
                 ],
                 child: _MultiLineChart(
                   series: [

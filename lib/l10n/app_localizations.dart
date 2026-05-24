@@ -274,6 +274,13 @@ class AppLocalizations {
   String get languageSystem => _t(en: 'System default', de: 'Systemstandard', tr: 'Sistem varsayılanı', es: 'Predeterminado del sistema', it: 'Predefinito di sistema', fr: 'Langue du système', zh: '跟随系统', ja: 'システム設定', ko: '시스템 기본값', ar: 'الافتراضي للنظام', ru: 'Системный');
   String get menstrualActivity => _t(en: 'Menstrual Activity — Last 7 Days', de: 'Menstruationsaktivität — Letzte 7 Tage', tr: 'Regl Aktivitesi — Son 7 Gün', es: 'Actividad menstrual — Últimos 7 días', it: 'Attività mestruale — Ultimi 7 giorni', fr: 'Activité menstruelle — 7 derniers jours', zh: '月经活动 — 最近7天', ja: '月経活動 — 直近7日間', ko: '월경 활동 — 최근 7일', ar: 'النشاط الشهري — آخر 7 أيام', ru: 'Менструальная активность — последние 7 дней');
 
+  String get chartWellbeingSleep => _t(en: 'Wellbeing & Sleep Quality', de: 'Wohlbefinden & Schlafqualität', tr: 'İyilik Hali & Uyku Kalitesi', es: 'Bienestar y Calidad del Sueño', it: 'Benessere e Qualità del Sonno', fr: 'Bien-être et Qualité du Sommeil', zh: '健康状况与睡眠质量', ja: '健康度・睡眠の質', ko: '웰빙 & 수면 질', ar: 'الرفاهية وجودة النوم', ru: 'Самочувствие и качество сна');
+  String get chartPainLevels => _t(en: 'Pain Levels', de: 'Schmerzniveaus', tr: 'Ağrı Düzeyleri', es: 'Niveles de Dolor', it: 'Livelli di Dolore', fr: 'Niveaux de Douleur', zh: '疼痛程度', ja: '痛みのレベル', ko: '통증 수준', ar: 'مستويات الألم', ru: 'Уровни боли');
+  String get legendNeuropathic => _t(en: 'Neuropathic', de: 'Neuropathisch', tr: 'Nöropatik', es: 'Neuropático', it: 'Neuropatico', fr: 'Neuropathique', zh: '神经性', ja: '神経性', ko: '신경병증성', ar: 'عصبي', ru: 'Нейропатическая');
+  String get legendMusculoskeletal => _t(en: 'Musculoskeletal', de: 'Muskuloskelettär', tr: 'Kas-İskelet', es: 'Musculoesquelético', it: 'Muscoloscheletrico', fr: 'Musculo-squelettique', zh: '肌肉骨骼', ja: '筋骨格系', ko: '근골격계', ar: 'عضلي هيكلي', ru: 'Мышечно-скелетная');
+  String get legendActive => _t(en: 'Active', de: 'Aktiv', tr: 'Aktif', es: 'Activo', it: 'Attivo', fr: 'Actif', zh: '活动', ja: 'アクティブ', ko: '활동시', ar: 'نشط', ru: 'Активный');
+  String get legendResting => _t(en: 'Resting', de: 'Ruhend', tr: 'Dinlenme', es: 'En reposo', it: 'A riposo', fr: 'Au repos', zh: '静息', ja: '安静時', ko: '안정시', ar: 'استراحة', ru: 'В покое');
+
   String _t({
     required String en,
     required String de,
