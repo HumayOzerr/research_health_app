@@ -164,12 +164,165 @@ class HealthService {
     }
   }
 
-  Future<List<({DateTime date, int steps})>> getLast7DaysSteps() async {
+  Future<int?> getStepsForDate(DateTime date) async {
+    final start = DateTime(date.year, date.month, date.day);
     final now = DateTime.now();
+    final end = start.add(const Duration(days: 1));
+    final effectiveEnd = end.isAfter(now) ? now : end;
+    try {
+      return await _health.getTotalStepsInInterval(start, effectiveEnd);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<double?> getHeartRateForDate(DateTime date) async {
+    final start = DateTime(date.year, date.month, date.day);
+    final now = DateTime.now();
+    final end = start.add(const Duration(days: 1));
+    final effectiveEnd = end.isAfter(now) ? now : end;
+    try {
+      final data = await _health.getHealthDataFromTypes(
+        startTime: start,
+        endTime: effectiveEnd,
+        types: [HealthDataType.HEART_RATE],
+      );
+      if (data.isEmpty) return null;
+      return (data.last.value as NumericHealthValue).numericValue.toDouble();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<double?> getSleepForDate(DateTime date) async {
+    final start = DateTime(date.year, date.month, date.day - 1, 18, 0);
+    final end = DateTime(date.year, date.month, date.day, 12, 0);
+    try {
+      final data = await _health.getHealthDataFromTypes(
+        startTime: start,
+        endTime: end,
+        types: [HealthDataType.SLEEP_ASLEEP],
+      );
+      if (data.isEmpty) return null;
+      final totalMinutes = data.fold<double>(
+        0,
+        (sum, p) => sum + p.dateTo.difference(p.dateFrom).inMinutes,
+      );
+      return totalMinutes / 60;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<double?> getActiveEnergyForDate(DateTime date) async {
+    final start = DateTime(date.year, date.month, date.day);
+    final now = DateTime.now();
+    final end = start.add(const Duration(days: 1));
+    final effectiveEnd = end.isAfter(now) ? now : end;
+    try {
+      final data = await _health.getHealthDataFromTypes(
+        startTime: start,
+        endTime: effectiveEnd,
+        types: [HealthDataType.ACTIVE_ENERGY_BURNED],
+      );
+      if (data.isEmpty) return null;
+      return data.fold<double>(
+        0,
+        (sum, p) => sum + (p.value as NumericHealthValue).numericValue.toDouble(),
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<double?> getWalkingSpeedForDate(DateTime date) async {
+    final start = DateTime(date.year, date.month, date.day);
+    final now = DateTime.now();
+    final end = start.add(const Duration(days: 1));
+    final effectiveEnd = end.isAfter(now) ? now : end;
+    try {
+      final data = await _health.getHealthDataFromTypes(
+        startTime: start,
+        endTime: effectiveEnd,
+        types: [HealthDataType.WALKING_SPEED],
+      );
+      if (data.isEmpty) return null;
+      final total = data.fold<double>(
+          0, (s, p) => s + (p.value as NumericHealthValue).numericValue.toDouble());
+      return total / data.length;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<int?> getFlightsClimbedForDate(DateTime date) async {
+    final start = DateTime(date.year, date.month, date.day);
+    final now = DateTime.now();
+    final end = start.add(const Duration(days: 1));
+    final effectiveEnd = end.isAfter(now) ? now : end;
+    try {
+      final data = await _health.getHealthDataFromTypes(
+        startTime: start,
+        endTime: effectiveEnd,
+        types: [HealthDataType.FLIGHTS_CLIMBED],
+      );
+      if (data.isEmpty) return null;
+      return data
+          .fold<double>(
+              0, (s, p) => s + (p.value as NumericHealthValue).numericValue.toDouble())
+          .round();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<double?> getDistanceWalkingForDate(DateTime date) async {
+    final start = DateTime(date.year, date.month, date.day);
+    final now = DateTime.now();
+    final end = start.add(const Duration(days: 1));
+    final effectiveEnd = end.isAfter(now) ? now : end;
+    try {
+      final data = await _health.getHealthDataFromTypes(
+        startTime: start,
+        endTime: effectiveEnd,
+        types: [HealthDataType.DISTANCE_WALKING_RUNNING],
+      );
+      if (data.isEmpty) return null;
+      final totalMeters = data.fold<double>(
+          0, (s, p) => s + (p.value as NumericHealthValue).numericValue.toDouble());
+      return totalMeters / 1000;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<double?> getRestingHeartRateForDate(DateTime date) async {
+    final start = DateTime(date.year, date.month, date.day);
+    final now = DateTime.now();
+    final end = start.add(const Duration(days: 1));
+    final effectiveEnd = end.isAfter(now) ? now : end;
+    try {
+      final data = await _health.getHealthDataFromTypes(
+        startTime: start,
+        endTime: effectiveEnd,
+        types: [HealthDataType.RESTING_HEART_RATE],
+      );
+      if (data.isEmpty) return null;
+      return (data.last.value as NumericHealthValue).numericValue.toDouble();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<List<({DateTime date, int steps})>> getStepsInRange(DateTime weekStart) async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
     final results = <({DateTime date, int steps})>[];
-    for (int i = 6; i >= 0; i--) {
-      final day = DateTime(now.year, now.month, now.day - i);
-      final end = i == 0 ? now : day.add(const Duration(days: 1));
+    for (int i = 0; i < 7; i++) {
+      final day = DateTime(weekStart.year, weekStart.month, weekStart.day + i);
+      if (day.isAfter(today)) break;
+      final dayEnd = day.add(const Duration(days: 1));
+      final end = dayEnd.isAfter(now) ? now : dayEnd;
       try {
         final steps = await _health.getTotalStepsInInterval(day, end);
         results.add((date: day, steps: steps ?? 0));
@@ -178,5 +331,11 @@ class HealthService {
       }
     }
     return results;
+  }
+
+  Future<List<({DateTime date, int steps})>> getLast7DaysSteps() async {
+    final now = DateTime.now();
+    final weekStart = DateTime(now.year, now.month, now.day - 6);
+    return getStepsInRange(weekStart);
   }
 }

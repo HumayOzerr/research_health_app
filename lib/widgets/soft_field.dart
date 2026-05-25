@@ -45,7 +45,7 @@ class SoftField extends StatelessWidget {
       decoration: InputDecoration(
         labelText: label,
         labelStyle: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
-        floatingLabelStyle: tt.labelMedium?.copyWith(
+        floatingLabelStyle: tt.labelSmall?.copyWith(
           color: cs.primary,
           fontWeight: FontWeight.w600,
         ),
@@ -53,8 +53,7 @@ class SoftField extends StatelessWidget {
         suffixIcon: suffixIcon,
         filled: true,
         fillColor: fillColor,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        contentPadding: const EdgeInsets.fromLTRB(20, 32, 20, 8),
         border: OutlineInputBorder(
           borderRadius: radius,
           borderSide: BorderSide.none,

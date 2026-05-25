@@ -1,31 +1,24 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
 import '../models/submission.dart';
 import 'storage_service.dart';
+import 'supabase_service.dart';
 
 class ApiService {
-  static const _endpoint = 'https://httpbin.org/post';
   final _storage = StorageService();
+  final _supabase = SupabaseService();
 
   Future<({bool success, bool queued})> submit(Submission submission) async {
     final json = submission.toJson();
-    try {
-      final response = await http
-          .post(
-            Uri.parse(_endpoint),
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode(json),
-          )
-          .timeout(const Duration(seconds: 10));
+    final id = json['submission']?['id'] as String? ?? submission.id;
 
-      if (response.statusCode == 200) {
-        await _storage.saveSubmission(json, status: 'submitted');
-        return (success: true, queued: false);
-      } else {
-        await _storage.saveSubmission(json, status: 'pending');
-        return (success: false, queued: true);
-      }
-    } catch (_) {
+    try {
+      await _supabase
+          .saveSubmission(id: id, payload: json)
+          .timeout(const Duration(seconds: 12));
+      await _storage.saveSubmission(json, status: 'submitted');
+      return (success: true, queued: false);
+    } catch (e) {
+      debugPrint('[ApiService] submit failed: $e');
       await _storage.saveSubmission(json, status: 'pending');
       return (success: false, queued: true);
     }
@@ -39,18 +32,13 @@ class ApiService {
       final id = data['submission']?['id'] as String?;
       if (id == null) continue;
       try {
-        final response = await http
-            .post(
-              Uri.parse(_endpoint),
-              headers: {'Content-Type': 'application/json'},
-              body: jsonEncode(data),
-            )
-            .timeout(const Duration(seconds: 10));
-        if (response.statusCode == 200) {
-          await _storage.updateStatus(id, 'submitted');
-          sent++;
-        }
-      } catch (_) {
+        await _supabase
+            .saveSubmission(id: id, payload: data)
+            .timeout(const Duration(seconds: 12));
+        await _storage.updateStatus(id, 'submitted');
+        sent++;
+      } catch (e) {
+        debugPrint('[ApiService] flush failed for $id: $e');
       }
     }
     return sent;

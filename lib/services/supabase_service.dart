@@ -79,7 +79,7 @@ class SupabaseService {
     try {
       final result = await client
           .from('profiles')
-          .select('participant_id, first_name, last_name, gender, last_period_start, consent_given, height_cm')
+          .select('participant_id, first_name, last_name, gender, age_range, last_period_start, consent_given, height_cm')
           .eq('id', currentUser!.id)
           .single();
       debugPrint('[getProfile] success: $result');
@@ -89,14 +89,25 @@ class SupabaseService {
       try {
         final result = await client
             .from('profiles')
-            .select('participant_id, first_name, last_name, gender')
+            .select('participant_id, first_name, last_name, gender, age_range, height_cm')
             .eq('id', currentUser!.id)
             .single();
         debugPrint('[getProfile] fallback success: $result');
         return result;
       } catch (e2) {
         debugPrint('[getProfile] fallback also failed: $e2');
-        return null;
+        try {
+          final result = await client
+              .from('profiles')
+              .select('participant_id, first_name, last_name, gender')
+              .eq('id', currentUser!.id)
+              .single();
+          debugPrint('[getProfile] minimal fallback: $result');
+          return result;
+        } catch (e3) {
+          debugPrint('[getProfile] all queries failed: $e3');
+          return null;
+        }
       }
     }
   }
@@ -113,13 +124,16 @@ class SupabaseService {
     String? gender,
     String? participantId,
     DateTime? lastPeriodStart,
+    int? heightCm,
   }) async {
     if (currentUser == null) return;
     final updates = <String, dynamic>{};
     if (firstName != null) updates['first_name'] = firstName;
     if (lastName != null) updates['last_name'] = lastName;
+    if (ageRange != null) updates['age_range'] = ageRange;
     if (gender != null) updates['gender'] = gender;
     if (participantId != null) updates['participant_id'] = participantId;
+    if (heightCm != null) updates['height_cm'] = heightCm;
     if (lastPeriodStart != null) {
       updates['last_period_start'] =
           lastPeriodStart.toIso8601String().split('T').first;
@@ -145,13 +159,22 @@ class SupabaseService {
     required String id,
     required Map<String, dynamic> payload,
   }) async {
-    if (currentUser == null) return;
-    await client.from('submissions').insert({
+    if (currentUser == null) throw Exception('Not authenticated');
+    await client.from('submissions').upsert({
       'id': id,
       'user_id': currentUser!.id,
       'payload': payload,
       'status': 'submitted',
     });
+  }
+
+  Future<void> deleteSubmission(String id) async {
+    if (currentUser == null) return;
+    await client
+        .from('submissions')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', currentUser!.id);
   }
 
   Future<List<Map<String, dynamic>>> getSubmissions() async {

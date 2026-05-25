@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import '../l10n/app_localizations.dart';
 import '../models/submission.dart';
@@ -12,6 +13,7 @@ import '../widgets/fade_slide_in.dart';
 import 'result_screen.dart';
 
 class ReviewScreen extends StatefulWidget {
+  final DateTime selectedDate;
   final HealthService healthService;
   final bool healthGranted;
   final String participantId;
@@ -26,9 +28,12 @@ class ReviewScreen extends StatefulWidget {
   final int neuropathicPain;
   final int musculoskeletalPain;
   final String comment;
+  final double? weightKg;
+  final double? bmi;
 
   const ReviewScreen({
     super.key,
+    required this.selectedDate,
     required this.healthService,
     required this.healthGranted,
     required this.participantId,
@@ -43,6 +48,8 @@ class ReviewScreen extends StatefulWidget {
     required this.neuropathicPain,
     required this.musculoskeletalPain,
     required this.comment,
+    this.weightKg,
+    this.bmi,
   });
 
   @override
@@ -54,6 +61,10 @@ class _ReviewScreenState extends State<ReviewScreen> {
   double? _heartRate;
   double? _sleepHours;
   double? _activeEnergy;
+  double? _walkingSpeed;
+  int? _flights;
+  double? _distance;
+  double? _restingHeartRate;
   bool _loadingHealth = true;
   bool _submitting = false;
 
@@ -65,11 +76,16 @@ class _ReviewScreenState extends State<ReviewScreen> {
 
   Future<void> _fetchHealthData() async {
     if (widget.healthGranted) {
+      final d = widget.selectedDate;
       final results = await Future.wait([
-        widget.healthService.getTodaySteps(),
-        widget.healthService.getLatestHeartRate(),
-        widget.healthService.getLastNightSleep(),
-        widget.healthService.getTodayActiveEnergy(),
+        widget.healthService.getStepsForDate(d),
+        widget.healthService.getHeartRateForDate(d),
+        widget.healthService.getSleepForDate(d),
+        widget.healthService.getActiveEnergyForDate(d),
+        widget.healthService.getWalkingSpeedForDate(d),
+        widget.healthService.getFlightsClimbedForDate(d),
+        widget.healthService.getDistanceWalkingForDate(d),
+        widget.healthService.getRestingHeartRateForDate(d),
       ]);
       if (mounted) {
         setState(() {
@@ -77,6 +93,10 @@ class _ReviewScreenState extends State<ReviewScreen> {
           _heartRate = results[1] as double?;
           _sleepHours = results[2] as double?;
           _activeEnergy = results[3] as double?;
+          _walkingSpeed = results[4] as double?;
+          _flights = results[5] as int?;
+          _distance = results[6] as double?;
+          _restingHeartRate = results[7] as double?;
         });
       }
     }
@@ -103,7 +123,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
 
     final submission = Submission(
       id: const Uuid().v4(),
-      timestamp: DateTime.now(),
+      timestamp: widget.selectedDate,
       participantId: widget.participantId,
       ageRange: widget.ageRange,
       gender: widget.gender,
@@ -116,10 +136,16 @@ class _ReviewScreenState extends State<ReviewScreen> {
       neuropathicPain: widget.neuropathicPain,
       musculoskeletalPain: widget.musculoskeletalPain,
       comment: widget.comment,
+      weightKg: widget.weightKg,
+      bmi: widget.bmi,
       stepCount: _steps,
       heartRateBpm: _heartRate,
       sleepHours: _sleepHours,
       activeEnergyKcal: _activeEnergy,
+      walkingSpeedKmh: _walkingSpeed,
+      flightsClimbed: _flights,
+      distanceKm: _distance,
+      restingHeartRateBpm: _restingHeartRate,
     );
 
     final payload = const JsonEncoder.withIndent('  ').convert(submission.toJson());
@@ -145,7 +171,10 @@ class _ReviewScreenState extends State<ReviewScreen> {
     final l = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: AppBarTitle(l.reviewTitle)),
+      appBar: AppBar(
+        title: AppBarTitle(l.reviewTitle),
+        automaticallyImplyLeading: false,
+      ),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
@@ -162,6 +191,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
               title: l.participant,
               icon: Icons.badge_outlined,
               children: [
+                _Row(l.recordDate,
+                    DateFormat.yMMMd(Localizations.localeOf(context).toLanguageTag()).format(widget.selectedDate)),
                 _Row(l.labelId, widget.participantId),
                 _Row(l.ageRange, widget.ageRange),
                 if (widget.gender != null)
@@ -190,6 +221,10 @@ class _ReviewScreenState extends State<ReviewScreen> {
                 _Row(l.sleepQuality, '${widget.sleepQuality} / 5'),
                 _Row(l.neuropathicPain, '${widget.neuropathicPain} / 10'),
                 _Row(l.musculoskeletalPain, '${widget.musculoskeletalPain} / 10'),
+                if (widget.weightKg != null)
+                  _Row(l.weightKg, '${widget.weightKg!.toStringAsFixed(1)} kg'),
+                if (widget.bmi != null)
+                  _Row(l.bmiTitle, widget.bmi!.toStringAsFixed(1)),
                 if (widget.comment.isNotEmpty) _Row(l.labelComment, widget.comment),
               ],
             ),
@@ -214,6 +249,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
                               _steps != null ? '$_steps steps' : l.noData),
                           _Row(l.labelHeartRate,
                               _heartRate != null ? '${_heartRate!.round()} bpm' : l.noData),
+                          _Row(l.labelRestingHeartRate,
+                              _restingHeartRate != null ? '${_restingHeartRate!.round()} bpm' : l.noData),
                           _Row(l.labelSleep,
                               _sleepHours != null
                                   ? '${_sleepHours!.toStringAsFixed(1)} h'
@@ -221,6 +258,16 @@ class _ReviewScreenState extends State<ReviewScreen> {
                           _Row(l.labelActiveEnergy,
                               _activeEnergy != null
                                   ? '${_activeEnergy!.round()} kcal'
+                                  : l.noData),
+                          _Row(l.labelWalkingSpeed,
+                              _walkingSpeed != null
+                                  ? '${(_walkingSpeed! * 3.6).toStringAsFixed(1)} km/h'
+                                  : l.noData),
+                          _Row(l.labelFlightsClimbed,
+                              _flights != null ? '$_flights' : l.noData),
+                          _Row(l.labelDistance,
+                              _distance != null
+                                  ? '${_distance!.toStringAsFixed(2)} km'
                                   : l.noData),
                         ],
             ),
@@ -237,6 +284,26 @@ class _ReviewScreenState extends State<ReviewScreen> {
                       child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                     )
                   : Text(l.submit),
+            ),
+          ),
+          const SizedBox(height: 8),
+          FadeSlideIn(
+            delay: const Duration(milliseconds: 200),
+            child: OutlinedButton.icon(
+              onPressed: _submitting ? null : () => Navigator.pop(context),
+              icon: const Icon(Icons.edit_outlined, size: 18),
+              label: Text(l.editAnswers),
+            ),
+          ),
+          const SizedBox(height: 4),
+          FadeSlideIn(
+            delay: const Duration(milliseconds: 210),
+            child: TextButton(
+              onPressed: _submitting
+                  ? null
+                  : () => Navigator.of(context).popUntil((route) => route.isFirst),
+              child: Text(l.cancel,
+                  style: TextStyle(color: cs.onSurfaceVariant)),
             ),
           ),
           const SizedBox(height: 12),

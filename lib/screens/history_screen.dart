@@ -22,8 +22,6 @@ class _Series {
   const _Series({required this.data, required this.color, this.dashed = false});
 }
 
-// ─── Main screen ─────────────────────────────────────────────────────────────
-
 class HistoryScreen extends StatefulWidget {
   final HealthService healthService;
   final bool healthGranted;
@@ -40,8 +38,31 @@ class HistoryScreen extends StatefulWidget {
 
 class _HistoryScreenState extends State<HistoryScreen> {
   List<Map<String, dynamic>> _history = [];
-  List<({DateTime date, int steps})> _liveSteps = [];
+  List<({DateTime date, int steps})> _weekSteps = [];
   bool _loading = true;
+  bool _stepsLoading = false;
+  int _weekOffset = 0;
+  int? _userHeightCm;
+
+  DateTime get _weekEnd {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    return today.add(Duration(days: _weekOffset * 7));
+  }
+
+  DateTime get _weekStart =>
+      DateTime(_weekEnd.year, _weekEnd.month, _weekEnd.day - 6);
+
+  List<Map<String, dynamic>> get _filteredHistory {
+    final start = _weekStart;
+    final end = _weekEnd.add(const Duration(days: 1));
+    return _history.where((e) {
+      final rawTs = ((e['data'] as Map?)?['submission'] as Map?)?['timestamp_utc'] as String?;
+      final ts = rawTs != null ? DateTime.tryParse(rawTs)?.toLocal() : null;
+      if (ts == null) return false;
+      return !ts.isBefore(start) && ts.isBefore(end);
+    }).toList();
+  }
 
   @override
   void initState() {
@@ -50,7 +71,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Future<void> _load() async {
-    final currentId = await SupabaseService().getParticipantId();
+    final profile = await SupabaseService().getProfile();
+    final currentId = profile?['participant_id'] as String?;
+    _userHeightCm = (profile?['height_cm'] as num?)?.toInt();
     final all = await StorageService().getHistory();
     final h = currentId == null
         ? all
@@ -58,14 +81,47 @@ class _HistoryScreenState extends State<HistoryScreen> {
             final pid = ((e['data'] as Map?)?['participant'] as Map?)?['id'] as String?;
             return pid == currentId;
           }).toList();
-    List<({DateTime date, int steps})> ls = [];
-    if (widget.healthGranted) ls = await widget.healthService.getLast7DaysSteps();
-    if (mounted) setState(() { _history = h; _liveSteps = ls; _loading = false; });
+    List<({DateTime date, int steps})> steps = [];
+    if (widget.healthGranted) steps = await widget.healthService.getStepsInRange(_weekStart);
+    if (mounted) setState(() { _history = h; _weekSteps = steps; _loading = false; });
   }
 
-  List<_Pt> _survey(double? Function(Map? sr) fn) {
+  Future<void> _loadWeekSteps() async {
+    if (!widget.healthGranted) return;
+    setState(() => _stepsLoading = true);
+    final steps = await widget.healthService.getStepsInRange(_weekStart);
+    if (mounted) setState(() { _weekSteps = steps; _stepsLoading = false; });
+  }
+
+  void _changeWeek(int delta) {
+    setState(() => _weekOffset += delta);
+    _loadWeekSteps();
+  }
+
+  Future<void> _openDateJump() async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final initialDate = _weekEnd.isAfter(today) ? today : _weekEnd;
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(2020),
+      lastDate: today,
+    );
+    if (picked == null || !mounted) return;
+    final pickedDay = DateTime(picked.year, picked.month, picked.day);
+    final diff = today.difference(pickedDay).inDays;
+    final newOffset = diff <= 0 ? 0 : -(diff ~/ 7);
+    if (newOffset != _weekOffset) {
+      HapticFeedback.selectionClick();
+      setState(() => _weekOffset = newOffset);
+      _loadWeekSteps();
+    }
+  }
+
+  List<_Pt> _survey(List<Map<String, dynamic>> src, double? Function(Map? sr) fn) {
     final out = <_Pt>[];
-    for (final e in _history.reversed) {
+    for (final e in src) {
       final data = e['data'] as Map?;
       final rawTs = (data?['submission'] as Map?)?['timestamp_utc'] as String?;
       final ts = rawTs != null ? DateTime.tryParse(rawTs)?.toLocal() : null;
@@ -73,12 +129,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
       final v = fn(data?['self_report'] as Map?);
       if (v != null) out.add((date: ts, value: v));
     }
+    out.sort((a, b) => a.date.compareTo(b.date));
     return out;
   }
 
-  List<_Pt> _metric(String type) {
+  List<_Pt> _metric(List<Map<String, dynamic>> src, String type) {
     final out = <_Pt>[];
-    for (final e in _history.reversed) {
+    for (final e in src) {
       final data = e['data'] as Map?;
       final rawTs = (data?['submission'] as Map?)?['timestamp_utc'] as String?;
       final ts = rawTs != null ? DateTime.tryParse(rawTs)?.toLocal() : null;
@@ -91,15 +148,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
         }
       }
     }
+    out.sort((a, b) => a.date.compareTo(b.date));
     return out;
   }
 
-  bool get _hasMenstrual => _history.any(
+  bool _hasMenstrual(List<Map<String, dynamic>> src) => src.any(
       (e) => ((e['data'] as Map?)?['self_report'] as Map?)?['menstrual_status'] != null);
 
-  Map<String, bool?> get _menstrualDays {
+  Map<String, bool?> _getMenstrualDays(List<Map<String, dynamic>> src) {
     final map = <String, bool?>{};
-    for (final e in _history) {
+    for (final e in src) {
       final data = e['data'] as Map?;
       final rawTs = (data?['submission'] as Map?)?['timestamp_utc'] as String?;
       final ts = rawTs != null ? DateTime.tryParse(rawTs)?.toLocal() : null;
@@ -112,6 +170,86 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return map;
   }
 
+  Widget _buildWeekNav(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    final l = AppLocalizations.of(context);
+    final isCurrentWeek = _weekOffset == 0;
+
+    final locale = Localizations.localeOf(context).languageCode;
+    final startStr = DateFormat('d MMM', locale).format(_weekStart);
+    final endStr   = DateFormat('d MMM yyyy', locale).format(_weekEnd);
+
+    return Card(
+      elevation: 0,
+      color: cs.surfaceContainerLow,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          children: [
+            IconButton(
+              onPressed: () => _changeWeek(-1),
+              icon: const Icon(Icons.chevron_left_rounded),
+              color: cs.primary,
+            ),
+            Expanded(
+              child: InkWell(
+                onTap: _openDateJump,
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.calendar_month_rounded,
+                              size: 12, color: cs.onSurfaceVariant),
+                          const SizedBox(width: 5),
+                          Text(
+                            '$startStr – $endStr',
+                            style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                        ],
+                      ),
+                      if (isCurrentWeek) ...[
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: cs.primaryContainer,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            l.thisWeek,
+                            style: tt.labelSmall?.copyWith(
+                              color: cs.onPrimaryContainer,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            IconButton(
+              onPressed: isCurrentWeek ? null : () => _changeWeek(1),
+              icon: Icon(
+                Icons.chevron_right_rounded,
+                color: isCurrentWeek ? cs.outlineVariant : cs.primary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -120,32 +258,59 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final tt = Theme.of(context).textTheme;
     final l = AppLocalizations.of(context);
 
-    if (_history.isEmpty && _liveSteps.isEmpty) {
+    if (_history.isEmpty && _weekSteps.isEmpty && !_stepsLoading) {
       return Scaffold(
-        appBar: AppBar(title: AppBarTitle(l.historyTitle)),
-        body: Center(
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Icon(Icons.history_rounded, size: 64, color: cs.outlineVariant),
-            const SizedBox(height: 12),
-            Text(l.noSubmissionsYet, style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
-          ]),
+        appBar: AppBar(
+          title: AppBarTitle(l.historyTitle),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.calendar_month_rounded),
+              tooltip: l.jumpToDate,
+              onPressed: _openDateJump,
+            ),
+          ],
+        ),
+        body: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+          children: [
+            _buildWeekNav(context),
+            const SizedBox(height: 48),
+            Center(
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Icon(Icons.history_rounded, size: 64, color: cs.outlineVariant),
+                const SizedBox(height: 12),
+                Text(l.noSubmissionsYet,
+                    style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
+              ]),
+            ),
+          ],
         ),
       );
     }
 
-    final wellbeing = _survey((sr) => ((sr?['wellbeing_rating'] as Map?)?['value'] as int?)?.toDouble());
-    final sleepQ    = _survey((sr) => ((sr?['sleep_quality'] as Map?)?['value'] as int?)?.toDouble());
-    final neuro     = _survey((sr) => (((sr?['pain'] as Map?)?['neuropathic'] as Map?)?['value'] as int?)?.toDouble());
-    final musculo   = _survey((sr) => (((sr?['pain'] as Map?)?['musculoskeletal'] as Map?)?['value'] as int?)?.toDouble());
-    final weight    = _survey((sr) => (sr?['weight_kg'] as num?)?.toDouble());
-    final bmi       = _survey((sr) => (sr?['bmi'] as num?)?.toDouble());
-    final hr        = _metric('heart_rate');
-    final restHr    = _metric('resting_heart_rate');
-    final sleepH    = _metric('sleep_duration');
-    final dist      = _metric('distance_walking_running');
-    final flights   = _metric('flights_climbed');
-    final speed     = _metric('walking_speed');
-    final energy    = _metric('active_energy_burned');
+    final filtered = _filteredHistory;
+
+    final wellbeing = _survey(filtered, (sr) => ((sr?['wellbeing_rating'] as Map?)?['value'] as int?)?.toDouble());
+    final sleepQ    = _survey(filtered, (sr) => ((sr?['sleep_quality'] as Map?)?['value'] as int?)?.toDouble());
+    final neuro     = _survey(filtered, (sr) => (((sr?['pain'] as Map?)?['neuropathic'] as Map?)?['value'] as int?)?.toDouble());
+    final musculo   = _survey(filtered, (sr) => (((sr?['pain'] as Map?)?['musculoskeletal'] as Map?)?['value'] as int?)?.toDouble());
+    final weight    = _survey(filtered, (sr) => (sr?['weight_kg'] as num?)?.toDouble());
+    final bmi       = _survey(filtered, (sr) {
+      final saved = (sr?['bmi'] as num?)?.toDouble();
+      if (saved != null) return saved;
+      final w = (sr?['weight_kg'] as num?)?.toDouble();
+      final h = _userHeightCm;
+      if (w == null || h == null) return null;
+      final hm = h / 100.0;
+      return w / (hm * hm);
+    });
+    final hr        = _metric(filtered, 'heart_rate');
+    final restHr    = _metric(filtered, 'resting_heart_rate');
+    final sleepH    = _metric(filtered, 'sleep_duration');
+    final dist      = _metric(filtered, 'distance_walking_running');
+    final flights   = _metric(filtered, 'flights_climbed');
+    final speed     = _metric(filtered, 'walking_speed');
+    final energy    = _metric(filtered, 'active_energy_burned');
 
     const c1 = Color(0xFF5C6BC0);
     const cNeuro = Color(0xFFEF6C00);
@@ -159,29 +324,53 @@ class _HistoryScreenState extends State<HistoryScreen> {
     const cFlights = Color(0xFF1E88E5);
     const cSteps = Color(0xFF00897B);
 
+    final hasChartData = wellbeing.isNotEmpty || sleepQ.isNotEmpty ||
+        neuro.isNotEmpty || musculo.isNotEmpty ||
+        _weekSteps.isNotEmpty || _stepsLoading ||
+        hr.isNotEmpty || restHr.isNotEmpty ||
+        sleepH.isNotEmpty || energy.isNotEmpty ||
+        speed.isNotEmpty || dist.isNotEmpty ||
+        weight.isNotEmpty || bmi.isNotEmpty ||
+        flights.isNotEmpty || _hasMenstrual(filtered) ||
+        filtered.isNotEmpty;
+
     return Scaffold(
-      appBar: AppBar(title: AppBarTitle(l.historyTitle)),
+      appBar: AppBar(
+        title: AppBarTitle(l.historyTitle),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.calendar_month_rounded),
+            tooltip: l.jumpToDate,
+            onPressed: _openDateJump,
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
+          _buildWeekNav(context),
+          const SizedBox(height: 12),
 
-          // ── Wellbeing & Sleep Quality ─────────────────────────────────────
-          if (wellbeing.isNotEmpty || sleepQ.isNotEmpty) ...[
+          if (!hasChartData) ...[
+            const SizedBox(height: 36),
+            Center(
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Icon(Icons.calendar_today_rounded, size: 48, color: cs.outlineVariant),
+                const SizedBox(height: 12),
+                Text(l.noDataThisWeek,
+                    style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
+              ]),
+            ),
+          ],
+
+          if (wellbeing.isNotEmpty) ...[
             FadeSlideIn(
               child: _ChartCard(
                 icon: Icons.self_improvement_rounded,
-                title: l.chartWellbeingSleep,
+                title: l.wellbeingRating,
                 color: cs.primary,
-                legend: [
-                  if (wellbeing.isNotEmpty) _LegendDot(color: cs.primary, label: l.wellbeing),
-                  if (sleepQ.isNotEmpty) _LegendDot(color: c1, label: l.sleepQuality, dashed: true),
-                ],
                 child: _MultiLineChart(
-                  series: [
-                    if (wellbeing.isNotEmpty) _Series(data: wellbeing, color: cs.primary),
-                    if (sleepQ.isNotEmpty) const _Series(data: [], color: c1, dashed: true),
-                  ].where((s) => s.data.isNotEmpty).toList()
-                    ..addAll(sleepQ.isNotEmpty ? [_Series(data: sleepQ, color: c1, dashed: true)] : []),
+                  series: [_Series(data: wellbeing, color: cs.primary)],
                   minY: 0, maxY: 5, yInterval: 1, unit: '/5',
                 ),
               ),
@@ -189,7 +378,22 @@ class _HistoryScreenState extends State<HistoryScreen> {
             const SizedBox(height: 12),
           ],
 
-          // ── Pain ─────────────────────────────────────────────────────────
+          if (sleepQ.isNotEmpty) ...[
+            FadeSlideIn(
+              delay: const Duration(milliseconds: 20),
+              child: _ChartCard(
+                icon: Icons.bedtime_rounded,
+                title: l.sleepQuality,
+                color: c1,
+                child: _MultiLineChart(
+                  series: [_Series(data: sleepQ, color: c1)],
+                  minY: 0, maxY: 5, yInterval: 1, unit: '/5',
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+
           if (neuro.isNotEmpty || musculo.isNotEmpty) ...[
             FadeSlideIn(
               delay: const Duration(milliseconds: 40),
@@ -213,21 +417,24 @@ class _HistoryScreenState extends State<HistoryScreen> {
             const SizedBox(height: 12),
           ],
 
-          // ── Steps (7-day live) ────────────────────────────────────────────
-          if (_liveSteps.isNotEmpty) ...[
+          if (_stepsLoading) ...[
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 20),
+              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+            ),
+          ] else if (_weekSteps.isNotEmpty) ...[
             FadeSlideIn(
               delay: const Duration(milliseconds: 60),
               child: _ChartCard(
                 icon: Icons.directions_walk_rounded,
                 title: l.stepActivity,
                 color: cSteps,
-                child: _StepBarChart(data: _liveSteps, color: cSteps),
+                child: _StepBarChart(data: _weekSteps, color: cSteps),
               ),
             ),
             const SizedBox(height: 12),
           ],
 
-          // ── Heart Rate ────────────────────────────────────────────────────
           if (hr.isNotEmpty || restHr.isNotEmpty) ...[
             FadeSlideIn(
               delay: const Duration(milliseconds: 80),
@@ -251,7 +458,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
             const SizedBox(height: 12),
           ],
 
-          // ── Sleep Hours ───────────────────────────────────────────────────
           if (sleepH.isNotEmpty) ...[
             FadeSlideIn(
               delay: const Duration(milliseconds: 100),
@@ -265,7 +471,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
             const SizedBox(height: 12),
           ],
 
-          // ── Active Energy ─────────────────────────────────────────────────
           if (energy.isNotEmpty) ...[
             FadeSlideIn(
               delay: const Duration(milliseconds: 110),
@@ -279,7 +484,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
             const SizedBox(height: 12),
           ],
 
-          // ── Walking Speed ─────────────────────────────────────────────────
           if (speed.isNotEmpty) ...[
             FadeSlideIn(
               delay: const Duration(milliseconds: 120),
@@ -296,7 +500,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
             const SizedBox(height: 12),
           ],
 
-          // ── Distance ──────────────────────────────────────────────────────
           if (dist.isNotEmpty) ...[
             FadeSlideIn(
               delay: const Duration(milliseconds: 130),
@@ -313,7 +516,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
             const SizedBox(height: 12),
           ],
 
-          // ── Weight ───────────────────────────────────────────────────────
           if (weight.isNotEmpty) ...[
             FadeSlideIn(
               delay: const Duration(milliseconds: 155),
@@ -331,7 +533,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
             const SizedBox(height: 12),
           ],
 
-          // ── BMI ───────────────────────────────────────────────────────────
           if (bmi.isNotEmpty) ...[
             FadeSlideIn(
               delay: const Duration(milliseconds: 158),
@@ -345,7 +546,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
             const SizedBox(height: 12),
           ],
 
-          // ── Flights Climbed ───────────────────────────────────────────────
           if (flights.isNotEmpty) ...[
             FadeSlideIn(
               delay: const Duration(milliseconds: 140),
@@ -359,32 +559,33 @@ class _HistoryScreenState extends State<HistoryScreen> {
             const SizedBox(height: 12),
           ],
 
-          // ── Menstrual ──────────────────────────────────────────────────────
-          if (_hasMenstrual) ...[
+          if (_hasMenstrual(filtered)) ...[
             FadeSlideIn(
               delay: const Duration(milliseconds: 150),
               child: _ChartCard(
                 icon: Icons.water_drop_rounded,
                 title: l.menstrualActivity,
                 color: const Color(0xFFB71C1C),
-                child: _MenstrualStrip(days: _menstrualDays),
+                child: _MenstrualStrip(days: _getMenstrualDays(filtered), weekEnd: _weekEnd),
               ),
             ),
             const SizedBox(height: 12),
           ],
 
-          // ── Submissions ────────────────────────────────────────────────────
-          if (_history.isNotEmpty) ...[
+          if (filtered.isNotEmpty) ...[
             const SizedBox(height: 4),
             FadeSlideIn(
               delay: const Duration(milliseconds: 160),
-              child: Text(AppLocalizations.of(context).pastSubmissionsHeader,
+              child: Text(l.pastSubmissionsHeader,
                   style: tt.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
             ),
             const SizedBox(height: 8),
-            ..._history.asMap().entries.map((e) => FadeSlideIn(
+            ...filtered.asMap().entries.map((e) => FadeSlideIn(
                   delay: Duration(milliseconds: 180 + e.key * 30),
-                  child: _SubmissionCard(entry: e.value),
+                  child: _SubmissionCard(
+                    entry: e.value,
+                    onDelete: () => setState(() => _history.remove(e.value)),
+                  ),
                 )),
           ],
         ],
@@ -392,8 +593,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 }
-
-// ─── Chart card wrapper ───────────────────────────────────────────────────────
 
 class _ChartCard extends StatelessWidget {
   final IconData icon;
@@ -453,8 +652,6 @@ class _ChartCard extends StatelessWidget {
   }
 }
 
-// ─── Legend dot ──────────────────────────────────────────────────────────────
-
 class _LegendDot extends StatelessWidget {
   final Color color;
   final String label;
@@ -484,8 +681,6 @@ class _LegendDot extends StatelessWidget {
   }
 }
 
-// ─── Multi-line chart ─────────────────────────────────────────────────────────
-
 class _MultiLineChart extends StatelessWidget {
   final List<_Series> series;
   final double? minY;
@@ -510,12 +705,22 @@ class _MultiLineChart extends StatelessWidget {
     if (allPts.isEmpty) return const SizedBox(height: 160);
 
     double actualMin = minY ?? allPts.map((p) => p.value).reduce(math.min);
-    double actualMax = maxY ?? (allPts.map((p) => p.value).reduce(math.max) * 1.2);
-    if (actualMin == actualMax) actualMax = actualMin + 1;
+    double actualMax = maxY ?? allPts.map((p) => p.value).reduce(math.max);
+    if (actualMin == actualMax) { actualMin -= 1; actualMax += 1; }
+    final vRange = actualMax - actualMin;
+    if (minY == null) actualMin = math.max(0, actualMin - vRange * 0.2);
+    if (maxY == null) actualMax = actualMax + vRange * 0.2;
 
     final primaryDates = series.reduce((a, b) => a.data.length >= b.data.length ? a : b).data.map((p) => p.date).toList();
     final count = primaryDates.length;
     final showEvery = count <= 4 ? 1 : count <= 8 ? 2 : 3;
+
+    final seenDays = <String>{};
+    final labelDates = primaryDates.map((d) {
+      final key = '${d.year}-${d.month}-${d.day}';
+      if (!seenDays.add(key)) return null;
+      return d;
+    }).toList();
 
     final bars = series.asMap().entries.map((entry) {
       final i = entry.key;
@@ -551,11 +756,16 @@ class _MultiLineChart extends StatelessWidget {
       );
     }).toList();
 
+    final dotPad = (actualMax - actualMin) * 0.07;
+    final displayMinY = actualMin - dotPad;
+
     return SizedBox(
       height: 180,
       child: LineChart(
         LineChartData(
-          minY: actualMin,
+          minX: -0.5,
+          maxX: (count - 1).toDouble() + 0.5,
+          minY: displayMinY,
           maxY: actualMax,
           lineBarsData: bars,
           clipData: const FlClipData.all(),
@@ -564,13 +774,16 @@ class _MultiLineChart extends StatelessWidget {
               sideTitles: SideTitles(
                 showTitles: true,
                 reservedSize: 26,
+                interval: 1.0,
                 getTitlesWidget: (v, _) {
-                  final idx = v.toInt();
-                  if (idx < 0 || idx >= primaryDates.length) return const SizedBox();
+                  final idx = v.round();
+                  if (idx < 0 || idx >= labelDates.length) return const SizedBox();
                   if (idx % showEvery != 0) return const SizedBox();
+                  final labelDate = labelDates[idx];
+                  if (labelDate == null) return const SizedBox();
                   return Padding(
                     padding: const EdgeInsets.only(top: 4),
-                    child: Text(DateFormat('d/M').format(primaryDates[idx]),
+                    child: Text(DateFormat('d/M').format(labelDate),
                         style: tt.labelSmall?.copyWith(fontSize: 9)),
                   );
                 },
@@ -582,7 +795,7 @@ class _MultiLineChart extends StatelessWidget {
                 reservedSize: 34,
                 interval: yInterval ?? ((actualMax - actualMin) / 4),
                 getTitlesWidget: (v, meta) {
-                  if (v == actualMin || v == actualMax) return const SizedBox();
+                  if (v <= displayMinY || v >= actualMax) return const SizedBox();
                   return Text(
                     v == v.roundToDouble() ? v.round().toString() : v.toStringAsFixed(1),
                     style: tt.labelSmall?.copyWith(fontSize: 9, color: cs.onSurfaceVariant),
@@ -632,8 +845,6 @@ class _MultiLineChart extends StatelessWidget {
     );
   }
 }
-
-// ─── Single bar chart (for submissions data) ──────────────────────────────────
 
 class _SingleBarChart extends StatelessWidget {
   final List<_Pt> data;
@@ -686,6 +897,13 @@ class _SingleBarChart extends StatelessWidget {
                 getTitlesWidget: (v, _) {
                   final idx = v.toInt();
                   if (idx < 0 || idx >= data.length) return const SizedBox();
+                  if (idx > 0) {
+                    final prev = data[idx - 1].date;
+                    final curr = data[idx].date;
+                    if (prev.year == curr.year && prev.month == curr.month && prev.day == curr.day) {
+                      return const SizedBox();
+                    }
+                  }
                   return Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(DateFormat('d/M').format(data[idx].date),
@@ -718,8 +936,6 @@ class _SingleBarChart extends StatelessWidget {
     );
   }
 }
-
-// ─── Step bar chart (7-day live from HealthService) ──────────────────────────
 
 class _StepBarChart extends StatelessWidget {
   final List<({DateTime date, int steps})> data;
@@ -798,8 +1014,6 @@ class _StepBarChart extends StatelessWidget {
   }
 }
 
-// ─── Single line chart (convenience wrapper) ──────────────────────────────────
-
 class _SingleLineChart extends StatelessWidget {
   final List<_Pt> data;
   final Color color;
@@ -813,8 +1027,6 @@ class _SingleLineChart extends StatelessWidget {
         unit: unit,
       );
 }
-
-// ─── BMI bar chart ────────────────────────────────────────────────────────────
 
 class _BmiBarChart extends StatelessWidget {
   final List<_Pt> data;
@@ -933,6 +1145,13 @@ class _BmiBarChart extends StatelessWidget {
                 getTitlesWidget: (v, _) {
                   final idx = v.toInt();
                   if (idx < 0 || idx >= data.length) return const SizedBox();
+                  if (idx > 0) {
+                    final prev = data[idx - 1].date;
+                    final curr = data[idx].date;
+                    if (prev.year == curr.year && prev.month == curr.month && prev.day == curr.day) {
+                      return const SizedBox();
+                    }
+                  }
                   return Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(DateFormat('d/M').format(data[idx].date),
@@ -981,11 +1200,10 @@ class _BmiBarChart extends StatelessWidget {
   }
 }
 
-// ─── Menstrual strip ──────────────────────────────────────────────────────────
-
 class _MenstrualStrip extends StatelessWidget {
   final Map<String, bool?> days;
-  const _MenstrualStrip({required this.days});
+  final DateTime weekEnd;
+  const _MenstrualStrip({required this.days, required this.weekEnd});
 
   static const _red = Color(0xFFB71C1C);
 
@@ -993,15 +1211,16 @@ class _MenstrualStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final today = DateTime.now();
+    final now = DateTime.now();
+    final todayDate = DateTime(now.year, now.month, now.day);
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: List.generate(7, (i) {
-        final day = today.subtract(Duration(days: 6 - i));
+        final day = weekEnd.subtract(Duration(days: 6 - i));
         final k = '${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}';
         final onPeriod = days[k];
-        final isToday = i == 6;
+        final isToday = day == todayDate;
 
         return Column(
           mainAxisSize: MainAxisSize.min,
@@ -1031,11 +1250,10 @@ class _MenstrualStrip extends StatelessWidget {
   }
 }
 
-// ─── Submission card ──────────────────────────────────────────────────────────
-
 class _SubmissionCard extends StatefulWidget {
   final Map<String, dynamic> entry;
-  const _SubmissionCard({required this.entry});
+  final VoidCallback onDelete;
+  const _SubmissionCard({required this.entry, required this.onDelete});
 
   @override
   State<_SubmissionCard> createState() => _SubmissionCardState();
@@ -1044,6 +1262,18 @@ class _SubmissionCard extends StatefulWidget {
 class _SubmissionCardState extends State<_SubmissionCard> {
   bool _expanded = false;
   bool _showJson = false;
+  bool _deleting = false;
+  bool _confirmingDelete = false;
+
+  Future<void> _doDelete() async {
+    setState(() { _confirmingDelete = false; _deleting = true; });
+    final id = (widget.entry['data'] as Map?)?['submission']?['id'] as String?;
+    if (id != null) {
+      await StorageService().deleteSubmission(id);
+      await SupabaseService().deleteSubmission(id);
+    }
+    if (mounted) widget.onDelete();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1090,40 +1320,116 @@ class _SubmissionCardState extends State<_SubmissionCard> {
       margin: const EdgeInsets.only(bottom: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       color: cs.surfaceContainerLow,
-      child: InkWell(
+      child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
-        onTap: () => setState(() { _expanded = !_expanded; if (!_expanded) _showJson = false; }),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(child: Text(dateStr,
-                      style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.w600))),
-                  if (onPeriod == true) ...[
-                    const Icon(Icons.water_drop, color: Color(0xFFB71C1C), size: 16),
-                    const SizedBox(width: 6),
-                  ],
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: statusColor.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            InkWell(
+              onTap: () => setState(() { _expanded = !_expanded; if (!_expanded) _showJson = false; }),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(child: Text(dateStr,
+                            style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.w600))),
+                        if (onPeriod == true) ...[
+                          const Icon(Icons.water_drop, color: Color(0xFFB71C1C), size: 16),
+                          const SizedBox(width: 6),
+                        ],
+                        if (isPending)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: statusColor.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(l.statusPending,
+                                style: tt.labelSmall?.copyWith(
+                                    color: statusColor, fontWeight: FontWeight.bold)),
+                          ),
+                      ],
                     ),
-                    child: Text(isPending ? l.statusPending : l.statusSubmitted,
-                        style: tt.labelSmall?.copyWith(
-                            color: statusColor, fontWeight: FontWeight.bold)),
-                  ),
-                ],
+                    const SizedBox(height: 6),
+                    Row(children: [
+                      _Chip('ID: ${participant?['id'] ?? '—'}'),
+                      const SizedBox(width: 6),
+                      if (wellbeing != null) _Chip('${l.labelRating}: $wellbeing/5'),
+                      const Spacer(),
+                      Icon(_expanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
+                          size: 18, color: cs.onSurfaceVariant),
+                    ]),
+                  ],
+                ),
               ),
-              const SizedBox(height: 6),
-              Row(children: [
-                _Chip('ID: ${participant?['id'] ?? '—'}'),
-                const SizedBox(width: 6),
-                if (wellbeing != null) _Chip('${l.labelRating}: $wellbeing/5'),
-              ]),
+            ),
+            // Delete row — completely outside the InkWell
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
+              child: _confirmingDelete
+                  ? Row(children: [
+                      Expanded(
+                        child: Text(l.deleteConfirmTitle,
+                            style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () => setState(() => _confirmingDelete = false),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: cs.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(l.cancel,
+                              style: tt.labelSmall?.copyWith(fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      if (_deleting)
+                        const SizedBox(width: 16, height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2))
+                      else
+                        GestureDetector(
+                          onTap: _doDelete,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: cs.error.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(l.delete,
+                                style: tt.labelSmall?.copyWith(
+                                    color: cs.error, fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                    ])
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        if (_deleting)
+                          const SizedBox(width: 16, height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2))
+                        else
+                          GestureDetector(
+                            onTap: () => setState(() => _confirmingDelete = true),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: cs.error.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(l.delete,
+                                  style: tt.labelSmall?.copyWith(
+                                      color: cs.error, fontWeight: FontWeight.bold)),
+                            ),
+                          ),
+                      ],
+                    ),
+            ),
 
               if (_expanded) ...[
                 const SizedBox(height: 12),
@@ -1162,13 +1468,20 @@ class _SubmissionCardState extends State<_SubmissionCard> {
 
                   if (menstrual != null) ...[
                     const SizedBox(height: 4),
-                    _DetailRow(Icons.water_drop_rounded, l.menstrualHealth,
-                        onPeriod == true ? l.yes : l.no,
-                        valueColor: onPeriod == true ? const Color(0xFFB71C1C) : null),
-                    if (cycleDay != null)
-                      _DetailRow(Icons.calendar_today_rounded, l.cycleDay, '$cycleDay'),
-                    if (cyclePhase != null)
-                      _DetailRow(Icons.auto_awesome_rounded, 'Phase', _phaseLabel(cyclePhase, l)),
+                    if (cycleDay != null && cyclePhase != null)
+                      _DetailRow(
+                        Icons.water_drop_rounded,
+                        l.menstrualCycle,
+                        '${onPeriod == true ? '${l.onPeriod} · ' : ''}${l.cycleDay} $cycleDay · ${_phaseLabel(cyclePhase, l)}',
+                        valueColor: onPeriod == true ? const Color(0xFFB71C1C) : null,
+                      )
+                    else if (onPeriod == true)
+                      _DetailRow(
+                        Icons.water_drop_rounded,
+                        l.menstrualCycle,
+                        l.onPeriod,
+                        valueColor: const Color(0xFFB71C1C),
+                      ),
                   ],
 
                   if (comment != null && comment.isNotEmpty) ...[
@@ -1228,14 +1541,7 @@ class _SubmissionCardState extends State<_SubmissionCard> {
                   ),
                 ],
               ],
-
-              Align(
-                alignment: Alignment.centerRight,
-                child: Icon(_expanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
-                    size: 18, color: cs.onSurfaceVariant),
-              ),
-            ],
-          ),
+          ],
         ),
       ),
     );

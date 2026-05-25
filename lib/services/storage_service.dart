@@ -36,6 +36,16 @@ class StorageService {
     return history.map((s) => jsonDecode(s) as Map<String, dynamic>).toList();
   }
 
+  Future<void> deleteSubmission(String submissionId) async {
+    final prefs = await _prefs;
+    final history = prefs.getStringList(_historyKey) ?? [];
+    history.removeWhere((s) {
+      final entry = jsonDecode(s) as Map<String, dynamic>;
+      return (entry['data'] as Map?)?['submission']?['id'] == submissionId;
+    });
+    await prefs.setStringList(_historyKey, history);
+  }
+
   Future<List<Map<String, dynamic>>> getPendingSubmissions() async {
     final all = await getHistory();
     return all.where((e) => e['status'] == 'pending').toList();
