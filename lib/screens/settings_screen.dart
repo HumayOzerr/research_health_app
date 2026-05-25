@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
+import '../services/profile_photo_service.dart';
 import '../services/settings_service.dart';
 import '../services/supabase_service.dart';
 import '../widgets/app_bar_title.dart';
@@ -33,6 +35,7 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   Map<String, dynamic>? _profile;
+  File? _photo;
 
   @override
   void initState() {
@@ -41,8 +44,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _loadProfile() async {
-    final p = await SupabaseService().getProfile();
-    if (mounted) setState(() => _profile = p);
+    final results = await Future.wait([
+      SupabaseService().getProfile(),
+      ProfilePhotoService.load(),
+    ]);
+    if (mounted) {
+      setState(() {
+        _profile = results[0] as Map<String, dynamic>?;
+        _photo = results[1] as File?;
+      });
+    }
   }
 
   Future<void> _signOut() async {
@@ -97,6 +108,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               FadeSlideIn(
                 child: _ProfileCard(
                   profile: _profile,
+                  photo: _photo,
                   l: l,
                   cs: cs,
                   tt: tt,
@@ -179,12 +191,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
 // ─────────────────────────────────────────────────────────────────
 class _ProfileCard extends StatelessWidget {
   final Map<String, dynamic>? profile;
+  final File? photo;
   final AppLocalizations l;
   final ColorScheme cs;
   final TextTheme tt;
 
   const _ProfileCard(
       {required this.profile,
+      required this.photo,
       required this.l,
       required this.cs,
       required this.tt});
@@ -218,20 +232,23 @@ class _ProfileCard extends StatelessWidget {
               width: 52,
               height: 52,
               decoration: BoxDecoration(
-                  color: cs.primary, shape: BoxShape.circle),
-              child: Center(
-                child: initials.isNotEmpty
-                    ? Text(
-                        initials,
-                        style: TextStyle(
-                          color: cs.onPrimary,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      )
-                    : Icon(Icons.person_rounded,
-                        color: cs.onPrimary, size: 24),
+                color: photo == null ? cs.primary : null,
+                shape: BoxShape.circle,
               ),
+              child: photo != null
+                  ? ClipOval(
+                      child: Image.file(photo!, width: 52, height: 52, fit: BoxFit.cover),
+                    )
+                  : Center(
+                      child: initials.isNotEmpty
+                          ? Text(initials,
+                              style: TextStyle(
+                                color: cs.onPrimary,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ))
+                          : Icon(Icons.person_rounded, color: cs.onPrimary, size: 24),
+                    ),
             ),
             const SizedBox(width: 14),
             Expanded(

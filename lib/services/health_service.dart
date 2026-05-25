@@ -333,6 +333,148 @@ class HealthService {
     return results;
   }
 
+  /// Returns daily data points for each health metric over the 7-day week
+  /// starting at [weekStart]. Reads directly from Apple Health — no survey needed.
+  /// Keys: 'hr', 'restHr', 'energy', 'speed', 'dist', 'flights', 'sleep'
+  Future<Map<String, dynamic>> getWeeklyMetrics(DateTime weekStart) async {
+    final now = DateTime.now();
+    final weekEnd = weekStart.add(const Duration(days: 7));
+    final effectiveEnd = weekEnd.isAfter(now) ? now : weekEnd;
+
+    List<({DateTime date, double value})> group(
+      List<HealthDataPoint> data, {
+      bool sum = false,
+      double factor = 1.0,
+    }) {
+      final byIndex = <int, List<double>>{};
+      for (final d in data) {
+        final idx = d.dateFrom.difference(weekStart).inDays;
+        if (idx < 0 || idx >= 7) continue;
+        byIndex.putIfAbsent(idx, () => []).add(
+            (d.value as NumericHealthValue).numericValue.toDouble() * factor);
+      }
+      final out = <({DateTime date, double value})>[];
+      for (final e in byIndex.entries) {
+        final day = weekStart.add(Duration(days: e.key));
+        if (day.isAfter(now)) continue;
+        final v = sum
+            ? e.value.reduce((a, b) => a + b)
+            : e.value.reduce((a, b) => a + b) / e.value.length;
+        out.add((date: day, value: v));
+      }
+      out.sort((a, b) => a.date.compareTo(b.date));
+      return out;
+    }
+
+    List<({DateTime date, double avg, double min, double max})> groupRange(
+      List<HealthDataPoint> data, {
+      double factor = 1.0,
+    }) {
+      final byIndex = <int, List<double>>{};
+      for (final d in data) {
+        final idx = d.dateFrom.difference(weekStart).inDays;
+        if (idx < 0 || idx >= 7) continue;
+        byIndex.putIfAbsent(idx, () => []).add(
+            (d.value as NumericHealthValue).numericValue.toDouble() * factor);
+      }
+      final out = <({DateTime date, double avg, double min, double max})>[];
+      for (final e in byIndex.entries) {
+        final day = weekStart.add(Duration(days: e.key));
+        if (day.isAfter(now)) continue;
+        final vals = e.value;
+        final avg = vals.reduce((a, b) => a + b) / vals.length;
+        final mn = vals.reduce((a, b) => a < b ? a : b);
+        final mx = vals.reduce((a, b) => a > b ? a : b);
+        out.add((date: day, avg: avg, min: mn, max: mx));
+      }
+      out.sort((a, b) => a.date.compareTo(b.date));
+      return out;
+    }
+
+    Future<List<({DateTime date, double value})>> fetch(
+      HealthDataType type, {
+      bool sum = false,
+      double factor = 1.0,
+    }) async {
+      try {
+        final data = await _health.getHealthDataFromTypes(
+          startTime: weekStart,
+          endTime: effectiveEnd,
+          types: [type],
+        );
+        return group(data, sum: sum, factor: factor);
+      } catch (_) {
+        return [];
+      }
+    }
+
+    Future<List<({DateTime date, double avg, double min, double max})>> fetchRange(
+      HealthDataType type, {
+      double factor = 1.0,
+    }) async {
+      try {
+        final data = await _health.getHealthDataFromTypes(
+          startTime: weekStart,
+          endTime: effectiveEnd,
+          types: [type],
+        );
+        return groupRange(data, factor: factor);
+      } catch (_) {
+        return [];
+      }
+    }
+
+    Future<List<({DateTime date, double value})>> fetchSleep() async {
+      try {
+        final sleepStart = weekStart.subtract(const Duration(hours: 6));
+        final data = await _health.getHealthDataFromTypes(
+          startTime: sleepStart,
+          endTime: effectiveEnd,
+          types: [HealthDataType.SLEEP_ASLEEP],
+        );
+        final byDay = <String, double>{};
+        for (final d in data) {
+          final mins = d.dateTo.difference(d.dateFrom).inMinutes.toDouble();
+          final wakeDay =
+              DateTime(d.dateTo.year, d.dateTo.month, d.dateTo.day);
+          final k = '${wakeDay.year}-${wakeDay.month}-${wakeDay.day}';
+          byDay[k] = (byDay[k] ?? 0) + mins;
+        }
+        final out = <({DateTime date, double value})>[];
+        for (int i = 0; i < 7; i++) {
+          final day = weekStart.add(Duration(days: i));
+          if (day.isAfter(now)) break;
+          final k = '${day.year}-${day.month}-${day.day}';
+          final mins = byDay[k];
+          if (mins != null && mins > 0) out.add((date: day, value: mins / 60));
+        }
+        return out;
+      } catch (_) {
+        return [];
+      }
+    }
+
+    final flat = await Future.wait([
+      fetch(HealthDataType.HEART_RATE),
+      fetch(HealthDataType.RESTING_HEART_RATE),
+      fetch(HealthDataType.ACTIVE_ENERGY_BURNED, sum: true),
+      fetch(HealthDataType.DISTANCE_WALKING_RUNNING, sum: true, factor: 1 / 1000),
+      fetch(HealthDataType.FLIGHTS_CLIMBED, sum: true),
+      fetchSleep(),
+    ]);
+    final speedRange = await fetchRange(HealthDataType.WALKING_SPEED, factor: 3.6);
+
+    return {
+      'hr':      flat[0],
+      'restHr':  flat[1],
+      'energy':  flat[2],
+      'dist':    flat[3],
+      'flights': flat[4],
+      'sleep':   flat[5],
+      'speed':   speedRange,
+    };
+  }
+
   Future<List<({DateTime date, int steps})>> getLast7DaysSteps() async {
     final now = DateTime.now();
     final weekStart = DateTime(now.year, now.month, now.day - 6);

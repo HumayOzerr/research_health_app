@@ -25,6 +25,12 @@ class Submission {
   final double? walkingSpeedKmh;
   final int? flightsClimbed;
   final double? distanceKm;
+  // Native HealthKit extras
+  final double? walkingStepLengthM;
+  final double? walkingAsymmetryPct;
+  final double? walkingDoubleSupportPct;
+  final double? walkingStabilityPct;
+  final double? headphoneAudioDb;
 
   Submission({
     required this.id,
@@ -51,6 +57,11 @@ class Submission {
     this.walkingSpeedKmh,
     this.flightsClimbed,
     this.distanceKm,
+    this.walkingStepLengthM,
+    this.walkingAsymmetryPct,
+    this.walkingDoubleSupportPct,
+    this.walkingStabilityPct,
+    this.headphoneAudioDb,
   });
 
   Map<String, dynamic> toJson() {
@@ -153,6 +164,66 @@ class Submission {
         'unit': 'bpm',
         'aggregation': 'latest',
         'period_start_utc': yesterday.toIso8601String(),
+        'period_end_utc': now.toIso8601String(),
+        'source': source,
+      });
+    }
+
+    if (walkingStepLengthM != null) {
+      metrics.add({
+        'type': 'walking_step_length',
+        'value': double.parse(walkingStepLengthM!.toStringAsFixed(3)),
+        'unit': 'm',
+        'aggregation': 'average',
+        'period_start_utc': todayMidnight.toIso8601String(),
+        'period_end_utc': now.toIso8601String(),
+        'source': source,
+      });
+    }
+
+    if (walkingAsymmetryPct != null) {
+      metrics.add({
+        'type': 'walking_asymmetry',
+        'value': double.parse(walkingAsymmetryPct!.toStringAsFixed(1)),
+        'unit': '%',
+        'aggregation': 'average',
+        'period_start_utc': todayMidnight.toIso8601String(),
+        'period_end_utc': now.toIso8601String(),
+        'source': source,
+      });
+    }
+
+    if (walkingDoubleSupportPct != null) {
+      metrics.add({
+        'type': 'walking_double_support',
+        'value': double.parse(walkingDoubleSupportPct!.toStringAsFixed(1)),
+        'unit': '%',
+        'aggregation': 'average',
+        'period_start_utc': todayMidnight.toIso8601String(),
+        'period_end_utc': now.toIso8601String(),
+        'source': source,
+      });
+    }
+
+    if (walkingStabilityPct != null) {
+      metrics.add({
+        'type': 'walking_steadiness',
+        'value': double.parse(walkingStabilityPct!.toStringAsFixed(1)),
+        'unit': '%',
+        'aggregation': 'average',
+        'period_start_utc': todayMidnight.toIso8601String(),
+        'period_end_utc': now.toIso8601String(),
+        'source': source,
+      });
+    }
+
+    if (headphoneAudioDb != null) {
+      metrics.add({
+        'type': 'headphone_audio_exposure',
+        'value': double.parse(headphoneAudioDb!.toStringAsFixed(1)),
+        'unit': 'dBASPL',
+        'aggregation': 'average',
+        'period_start_utc': todayMidnight.toIso8601String(),
         'period_end_utc': now.toIso8601String(),
         'source': source,
       });

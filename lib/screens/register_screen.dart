@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../l10n/app_localizations.dart';
+import '../services/profile_photo_service.dart';
 import '../services/settings_service.dart';
 import '../services/supabase_service.dart';
 import '../widgets/app_page_route.dart';
@@ -24,6 +27,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _heightCtrl = TextEditingController();
   String? _ageRange;
   String? _gender;
+  File? _photo;
   bool _genderError = false;
 
   static const _ageRanges = ['18–24', '25–34', '35–44', '45–54', '55–64', '65+'];
@@ -50,6 +54,81 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _idCtrl.dispose();
     _heightCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickPhoto() async {
+    final l = AppLocalizations.of(context);
+    final cs = Theme.of(context).colorScheme;
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40, height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: cs.outlineVariant,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: cs.primaryContainer,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(Icons.photo_library_outlined, color: cs.primary),
+                ),
+                title: Text(l.photoFromGallery),
+                onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+              ),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: cs.primaryContainer,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(Icons.camera_alt_outlined, color: cs.primary),
+                ),
+                title: Text(l.photoFromCamera),
+                onTap: () => Navigator.pop(ctx, ImageSource.camera),
+              ),
+              if (_photo != null)
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: cs.errorContainer,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(Icons.delete_outline_rounded, color: cs.error),
+                  ),
+                  title: Text(l.removePhoto, style: TextStyle(color: cs.error)),
+                  onTap: () => Navigator.pop(ctx, null),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (!mounted) return;
+    if (source == null && _photo != null) {
+      await ProfilePhotoService.delete();
+      setState(() => _photo = null);
+    } else if (source != null) {
+      final file = await ProfilePhotoService.pick(source: source);
+      if (file != null && mounted) setState(() => _photo = file);
+    }
   }
 
   Future<void> _register() async {
@@ -186,6 +265,71 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
+                          // ── Optional profile photo ────────────
+                          Center(
+                            child: GestureDetector(
+                              onTap: _pickPhoto,
+                              child: Stack(
+                                alignment: Alignment.bottomRight,
+                                children: [
+                                  Container(
+                                    width: 88,
+                                    height: 88,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: _photo == null
+                                          ? cs.surfaceContainerHighest
+                                          : null,
+                                      border: Border.all(
+                                        color: cs.primary.withValues(alpha: 0.3),
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: _photo != null
+                                        ? ClipOval(
+                                            child: Image.file(
+                                              _photo!,
+                                              width: 88,
+                                              height: 88,
+                                              fit: BoxFit.cover,
+                                            ),
+                                          )
+                                        : Icon(
+                                            Icons.person_outline_rounded,
+                                            size: 40,
+                                            color: cs.onSurfaceVariant
+                                                .withValues(alpha: 0.5),
+                                          ),
+                                  ),
+                                  Container(
+                                    width: 28,
+                                    height: 28,
+                                    decoration: BoxDecoration(
+                                      color: cs.primary,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                          color: cs.surface, width: 2),
+                                    ),
+                                    child: Icon(Icons.camera_alt_rounded,
+                                        size: 13, color: cs.onPrimary),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 6, bottom: 18),
+                            child: Center(
+                              child: Text(
+                                l.addPhoto,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: cs.onSurfaceVariant
+                                      .withValues(alpha: 0.6),
+                                ),
+                              ),
+                            ),
+                          ),
                           SoftField(
                             controller: _idCtrl,
                             label: l.participantId,

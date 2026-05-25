@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../services/api_service.dart';
 import '../services/health_service.dart';
+import '../services/native_health_service.dart';
 import '../services/settings_service.dart';
 import '../widgets/app_page_route.dart';
 import '../widgets/fade_slide_in.dart';
@@ -33,6 +34,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     setState(() => _loading = true);
     await _healthService.configure();
     final granted = await _healthService.requestPermissions();
+    await NativeHealthService().requestPermissions();
     if (!mounted) return;
     setState(() => _loading = false);
     Navigator.push(

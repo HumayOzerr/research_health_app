@@ -161,6 +161,269 @@ class AppLocalizations {
   String get labelFlightsClimbed => _t(en: 'Floors climbed', de: 'Treppen gestiegen', tr: 'Çıkılan kat', es: 'Pisos subidos', it: 'Piani saliti', fr: 'Étages montés', zh: '爬楼层数', ja: '上った階数', ko: '오른 층수', ar: 'الطوابق المصعودة', ru: 'Этажей пройдено');
   String get labelDistance => _t(en: 'Distance today', de: 'Distanz heute', tr: 'Bugünkü mesafe', es: 'Distancia hoy', it: 'Distanza oggi', fr: 'Distance aujourd\'hui', zh: '今日距离', ja: '本日の距離', ko: '오늘 거리', ar: 'المسافة اليوم', ru: 'Дистанция сегодня');
   String get labelRestingHeartRate => _t(en: 'Resting heart rate', de: 'Ruhepuls', tr: 'Dinlenme kalp hızı', es: 'Frecuencia cardíaca en reposo', it: 'Frequenza cardiaca a riposo', fr: 'Fréquence cardiaque au repos', zh: '静息心率', ja: '安静時心拍数', ko: '안정시 심박수', ar: 'معدل ضربات القلب أثناء الراحة', ru: 'Пульс в покое');
+  String get labelStepLength => _t(en: 'Step length', de: 'Schrittlänge', tr: 'Adım uzunluğu', es: 'Longitud del paso', it: 'Lunghezza del passo', fr: 'Longueur du pas', zh: '步长', ja: 'ステップ長', ko: '보폭', ar: 'طول الخطوة', ru: 'Длина шага');
+  String get labelWalkingAsymmetry => _t(en: 'Walking asymmetry', de: 'Gangsymmetrie', tr: 'Yürüyüş asimetrisi', es: 'Asimetría al caminar', it: 'Asimmetria nella camminata', fr: 'Asymétrie de marche', zh: '步态不对称', ja: '歩行非対称性', ko: '보행 비대칭', ar: 'عدم تماثل المشي', ru: 'Асимметрия ходьбы');
+  String get labelDoubleSupport => _t(en: 'Double support', de: 'Doppelstützphase', tr: 'Çift destek süresi', es: 'Soporte doble', it: 'Doppio appoggio', fr: 'Double appui', zh: '双支撑时间', ja: '両脚支持時間', ko: '이중 지지', ar: 'دعم مزدوج', ru: 'Двойная опора');
+  String get labelWalkingSteadiness => _t(en: 'Walking steadiness', de: 'Gangstabilität', tr: 'Yürüyüş dengesi', es: 'Estabilidad al caminar', it: 'Stabilità nella camminata', fr: 'Stabilité de marche', zh: '步态平稳性', ja: '歩行安定性', ko: '보행 안정성', ar: 'ثبات المشي', ru: 'Устойчивость ходьбы');
+  String get labelHeadphoneAudio => _t(en: 'Headphone audio', de: 'Kopfhörer-Audio', tr: 'Kulaklık ses düzeyi', es: 'Audio de auriculares', it: 'Audio cuffie', fr: 'Audio casque', zh: '耳机音频', ja: 'ヘッドフォン音量', ko: '이어폰 오디오', ar: 'صوت السماعة', ru: 'Аудио наушников');
+  String get chartGaitAnalysis => _t(en: 'Gait analysis', de: 'Ganganalyse', tr: 'Yürüyüş analizi', es: 'Análisis de la marcha', it: 'Analisi dell\'andatura', fr: 'Analyse de la marche', zh: '步态分析', ja: '歩行分析', ko: '보행 분석', ar: 'تحليل المشي', ru: 'Анализ походки');
+  String get chartStepLength => _t(en: 'Step length', de: 'Schrittlänge', tr: 'Adım uzunluğu', es: 'Longitud del paso', it: 'Lunghezza del passo', fr: 'Longueur du pas', zh: '步长', ja: 'ステップ長', ko: '보폭', ar: 'طول الخطوة', ru: 'Длина шага');
+  String get chartHeadphoneAudio => _t(en: 'Headphone audio', de: 'Kopfhörer-Audio', tr: 'Kulaklık ses düzeyi', es: 'Audio auriculares', it: 'Audio cuffie', fr: 'Audio casque', zh: '耳机音频', ja: 'ヘッドフォン', ko: '이어폰', ar: 'صوت السماعة', ru: 'Наушники');
+  String get legendAsymmetry => _t(en: 'Asymmetry', de: 'Asymmetrie', tr: 'Asimetri', es: 'Asimetría', it: 'Asimmetria', fr: 'Asymétrie', zh: '不对称', ja: '非対称', ko: '비대칭', ar: 'عدم التماثل', ru: 'Асимметрия');
+  String get legendDoubleSupport => _t(en: 'Dbl support', de: 'Doppelstütz', tr: 'Çift destek', es: 'Doble apoyo', it: 'Doppio appog.', fr: 'Double appui', zh: '双支撑', ja: '両脚支持', ko: '이중지지', ar: 'دعم مزدوج', ru: 'Двойная опора');
+  String get legendSteadiness => _t(en: 'Steadiness', de: 'Stabilität', tr: 'Denge', es: 'Estabilidad', it: 'Stabilità', fr: 'Stabilité', zh: '平稳性', ja: '安定性', ko: '안정성', ar: 'الثبات', ru: 'Устойчивость');
+  String get legendHeadphone => _t(en: 'Headphone', de: 'Kopfhörer', tr: 'Kulaklık', es: 'Auriculares', it: 'Cuffie', fr: 'Casque', zh: '耳机', ja: 'ヘッドフォン', ko: '이어폰', ar: 'سماعة', ru: 'Наушники');
+  String get nativeNoData => _t(en: 'No gait data in Apple Health yet', de: 'Noch keine Gangdaten', tr: 'Apple Health\'te henüz yürüyüş verisi yok', es: 'Sin datos de marcha aún', it: 'Nessun dato di andatura ancora', fr: 'Pas encore de données de marche', zh: '暂无步态数据', ja: '歩行データなし', ko: '보행 데이터 없음', ar: 'لا توجد بيانات مشي بعد', ru: 'Данных о ходьбе пока нет');
+
+  // ── Chart info tooltips
+  String get infoWellbeing => _t(
+    en: 'Your self-reported overall wellbeing, rated 1–5. Reflects how you felt physically and mentally on that day. Tracking this over time can reveal patterns linked to health or lifestyle changes.',
+    de: 'Ihre selbst bewertete allgemeine Gesundheit, 1–5. Spiegelt Ihr körperliches und geistiges Befinden wider. Die Verfolgung im Laufe der Zeit kann Muster aufzeigen, die mit Gesundheits- oder Lebensstiländerungen zusammenhängen.',
+    tr: 'Kendi bildirdiğiniz genel iyilik haliniz, 1–5 arası puanlanır. O günkü fiziksel ve zihinsel durumunuzu yansıtır. Zaman içindeki takibi, sağlık veya yaşam tarzı değişiklikleriyle bağlantılı örüntüleri ortaya çıkarabilir.',
+    es: 'Tu bienestar general autoinformado, puntuado del 1 al 5. Refleja cómo te sentiste física y mentalmente ese día. Seguirlo con el tiempo puede revelar patrones relacionados con cambios de salud o estilo de vida.',
+    it: 'Il tuo benessere generale autoriportato, valutato da 1 a 5. Riflette come ti sei sentito fisicamente e mentalmente quel giorno. Monitorarlo nel tempo può rivelare schemi legati a cambiamenti di salute o stile di vita.',
+    fr: 'Votre bien-être général auto-évalué, noté de 1 à 5. Reflète comment vous vous êtes senti physiquement et mentalement ce jour-là. Le suivre dans le temps peut révéler des tendances liées aux changements de santé ou de mode de vie.',
+    zh: '您自我评估的整体健康状况，评分1–5。反映您当天的身体和心理状态。随时间跟踪可以揭示与健康或生活方式变化相关的规律。',
+    ja: '自己評価による全体的な健康度（1–5）。その日の身体的・精神的な状態を反映します。経時的に追跡することで、健康やライフスタイルの変化に関連するパターンを明らかにできます。',
+    ko: '자기 보고한 전반적인 웰빙, 1–5점 평가. 그날의 신체적, 정신적 상태를 반영합니다. 시간에 따라 추적하면 건강이나 생활 방식 변화와 관련된 패턴을 발견할 수 있습니다.',
+    ar: 'صحتك العامة المُبلَّغ عنها ذاتياً، مصنفة من 1 إلى 5. تعكس كيف شعرت جسدياً وعقلياً في ذلك اليوم. يمكن أن يكشف تتبعها بمرور الوقت عن أنماط مرتبطة بتغيرات الصحة أو نمط الحياة.',
+    ru: 'Ваша самооценка общего самочувствия по шкале 1–5. Отражает физическое и психическое состояние в этот день. Отслеживание со временем позволяет выявить закономерности, связанные со здоровьем или образом жизни.',
+  );
+  String get infoSleepQuality => _t(
+    en: 'Your subjective rating of last night\'s sleep quality, scored 1–5. Unlike sleep duration, this captures how rested you actually feel. Low scores may indicate poor sleep despite adequate hours.',
+    de: 'Ihre subjektive Bewertung der Schlafqualität der letzten Nacht, 1–5. Im Gegensatz zur Schlafdauer erfasst dies, wie ausgeruht Sie sich fühlen. Niedrige Werte können schlechten Schlaf trotz ausreichender Stunden anzeigen.',
+    tr: 'Gece uykunuzun subjektif kalite puanı, 1–5. Uyku süresinden farklı olarak, ne kadar dinlenmiş hissettiğinizi yansıtır. Düşük puanlar yeterli saatlere rağmen kötü uyku kalitesine işaret edebilir.',
+    es: 'Tu valoración subjetiva de la calidad del sueño de anoche, del 1 al 5. A diferencia de la duración, captura cómo de descansado te sientes. Las puntuaciones bajas pueden indicar sueño deficiente a pesar de las horas adecuadas.',
+    it: 'La tua valutazione soggettiva della qualità del sonno, da 1 a 5. A differenza della durata, cattura quanto ti senti riposato. Punteggi bassi possono indicare un sonno scarso nonostante le ore adeguate.',
+    fr: 'Votre évaluation subjective de la qualité du sommeil de la nuit dernière, notée de 1 à 5. Contrairement à la durée, elle capture à quel point vous vous sentez reposé. Des scores bas peuvent indiquer un mauvais sommeil malgré des heures suffisantes.',
+    zh: '您对昨晚睡眠质量的主观评分，1–5分。与睡眠时长不同，这反映了您的恢复感。即使睡眠时间充足，低分也可能表示睡眠质量差。',
+    ja: '昨夜の睡眠の質の主観的評価（1–5）。睡眠時間とは異なり、どれだけ休めたかを反映します。十分な時間を寝ていても低スコアは睡眠不良を示す場合があります。',
+    ko: '지난밤 수면의 질에 대한 주관적 평가, 1–5점. 수면 시간과 달리 얼마나 쉬었는지를 반영합니다. 낮은 점수는 충분한 수면 시간에도 수면 불량을 나타낼 수 있습니다.',
+    ar: 'تقييمك الشخصي لجودة نوم الليلة الماضية، من 1 إلى 5. يعكس مدى شعورك بالراحة. قد تشير الدرجات المنخفضة إلى نوم سيئ على الرغم من الساعات الكافية.',
+    ru: 'Субъективная оценка качества сна прошлой ночью, 1–5. В отличие от продолжительности, это показывает, насколько вы отдохнули. Низкие оценки могут указывать на плохой сон даже при достаточном количестве часов.',
+  );
+  String get infoPainLevels => _t(
+    en: 'Two pain scores rated 0–10: neuropathic pain (burning, tingling or shooting nerve sensations) and musculoskeletal pain (joint, muscle or bone pain). Higher values indicate more intense pain.',
+    de: 'Zwei Schmerzwerte von 0–10: neuropathischer Schmerz (Brennen, Kribbeln, Nervenstiche) und muskuloskelettaler Schmerz (Gelenk-, Muskel- oder Knochenschmerzen). Höhere Werte zeigen stärkeren Schmerz.',
+    tr: '0–10 arası iki ağrı puanı: nöropatik ağrı (yanma, karıncalanma veya sinir ağrısı) ve kas-iskelet ağrısı (eklem, kas veya kemik ağrısı). Daha yüksek değerler daha yoğun ağrıyı gösterir.',
+    es: 'Dos puntuaciones de dolor del 0 al 10: dolor neuropático (ardor, hormigueo o punzadas nerviosas) y dolor musculoesquelético (dolor articular, muscular u óseo). Los valores más altos indican mayor intensidad del dolor.',
+    it: 'Due punteggi del dolore da 0 a 10: dolore neuropatico (bruciore, formicolio o fiammate) e dolore muscoloscheletrico (dolore articolare, muscolare o osseo). Valori più alti indicano dolore più intenso.',
+    fr: 'Deux scores de douleur de 0 à 10 : douleur neuropathique (brûlure, picotements, élancements) et douleur musculosquelettique (douleur articulaire, musculaire ou osseuse). Des valeurs plus élevées indiquent une douleur plus intense.',
+    zh: '两项疼痛评分（0–10）：神经性疼痛（烧灼感、刺痛或神经放射痛）和肌肉骨骼疼痛（关节、肌肉或骨骼疼痛）。数值越高表示疼痛越强烈。',
+    ja: '0–10の2つの痛みスコア：神経障害性疼痛（灼熱感・刺痛・神経痛）と筋骨格系疼痛（関節・筋肉・骨の痛み）。値が高いほど痛みが強いことを示します。',
+    ko: '0–10점의 두 가지 통증 점수: 신경병증성 통증(타는 감각, 저림, 신경통)과 근골격계 통증(관절, 근육 또는 뼈 통증). 높은 값일수록 더 강한 통증을 나타냅니다.',
+    ar: 'درجتان للألم من 0 إلى 10: الألم العصبي (الحرق والتنميل وألم الأعصاب) والألم العضلي الهيكلي (ألم المفاصل والعضلات والعظام). تشير القيم الأعلى إلى ألم أشد.',
+    ru: 'Две оценки боли от 0 до 10: нейропатическая боль (жжение, покалывание, прострелы) и скелетно-мышечная боль (боль в суставах, мышцах или костях). Более высокие значения указывают на более сильную боль.',
+  );
+  String get infoStepActivity => _t(
+    en: 'Total steps counted each day, read directly from Apple Health. Covers all walking and running captured by your iPhone and Apple Watch. Most guidelines suggest 7,000–10,000 steps per day for general health.',
+    de: 'Täglich gezählte Schritte, direkt aus Apple Health. Umfasst Geh- und Laufbewegungen von iPhone und Apple Watch. Die meisten Richtlinien empfehlen 7.000–10.000 Schritte täglich.',
+    tr: 'Her gün sayılan toplam adımlar, doğrudan Apple Health\'ten okunur. iPhone ve Apple Watch tarafından kaydedilen tüm yürüyüş ve koşuları kapsar. Genel sağlık için çoğu kılavuz günde 7.000–10.000 adım önerir.',
+    es: 'Pasos totales contados cada día desde Apple Health. Abarca caminar y correr capturado por tu iPhone y Apple Watch. La mayoría de las guías sugieren 7.000–10.000 pasos diarios para la salud general.',
+    it: 'Passi totali contati ogni giorno da Apple Health. Comprende camminata e corsa da iPhone e Apple Watch. La maggior parte delle linee guida suggerisce 7.000–10.000 passi al giorno.',
+    fr: 'Pas totaux comptés chaque jour depuis Apple Health. Couvre la marche et la course captées par votre iPhone et Apple Watch. La plupart des recommandations suggèrent 7 000 à 10 000 pas par jour.',
+    zh: '每天的总步数，直接从Apple Health读取。包括iPhone和Apple Watch记录的所有步行和跑步。大多数指南建议每天7,000–10,000步。',
+    ja: '毎日の総歩数をApple Healthから直接読み取ります。iPhoneとApple Watchが記録したすべての歩行とランニングを含みます。一般的な目安は1日7,000〜10,000歩です。',
+    ko: 'Apple Health에서 직접 읽은 매일의 총 걸음 수. iPhone 및 Apple Watch에서 기록한 모든 걷기와 달리기를 포함합니다. 일반적인 건강을 위해 하루 7,000–10,000보가 권장됩니다.',
+    ar: 'إجمالي الخطوات المحسوبة يومياً من Apple Health. يشمل المشي والجري عبر iPhone وApple Watch. تقترح معظم الإرشادات 7,000–10,000 خطوة يومياً للصحة العامة.',
+    ru: 'Общее количество шагов за каждый день из Apple Health. Включает ходьбу и бег iPhone и Apple Watch. Большинство рекомендаций предлагают 7 000–10 000 шагов в день.',
+  );
+  String get infoHeartRate => _t(
+    en: 'Active heart rate (during movement) and resting heart rate in beats per minute, from Apple Health. A lower resting heart rate generally reflects better cardiovascular fitness. Large spikes in active rate are normal during exercise.',
+    de: 'Aktive Herzfrequenz (bei Bewegung) und Ruheherzfrequenz in Schlägen pro Minute, aus Apple Health. Eine niedrigere Ruheherzfrequenz spiegelt bessere kardiovaskuläre Fitness wider. Spitzen bei der aktiven Rate sind beim Sport normal.',
+    tr: 'Apple Health\'ten alınan aktif kalp hızı (hareket sırasında) ve istirahat kalp hızı (dakika başına atış). Düşük istirahat kalp hızı genellikle daha iyi kardiyovasküler kondisyonu yansıtır. Egzersiz sırasında ani artışlar normaldir.',
+    es: 'Frecuencia cardíaca activa (durante el movimiento) y en reposo en latidos por minuto, de Apple Health. Una frecuencia en reposo más baja refleja mejor condición cardiovascular. Los picos durante el ejercicio son normales.',
+    it: 'Frequenza cardiaca attiva (durante il movimento) e a riposo in battiti al minuto, da Apple Health. Una frequenza a riposo inferiore riflette una migliore forma cardiovascolare. I picchi durante l\'esercizio sono normali.',
+    fr: 'Fréquence cardiaque active (pendant le mouvement) et au repos en battements par minute, depuis Apple Health. Une fréquence au repos plus basse reflète une meilleure forme cardiovasculaire. Les pics durant l\'exercice sont normaux.',
+    zh: '来自Apple Health的活动心率（运动时）和静息心率（每分钟心跳次数）。较低的静息心率通常反映更好的心血管健康。运动时活动心率大幅上升是正常的。',
+    ja: 'Apple Healthからの活動中心拍数（動作中）と安静時心拍数（1分間の拍動数）。安静時心拍数が低いほど心臓血管の健康が良好です。運動中のスパイクは正常です。',
+    ko: 'Apple Health에서 제공하는 활동 심박수(움직임 중)와 안정 심박수(분당 박동). 낮은 안정 심박수는 더 좋은 심혈관 건강을 반영합니다. 운동 중 급격한 상승은 정상입니다.',
+    ar: 'معدل ضربات القلب النشط (أثناء الحركة) وأثناء الراحة بالضربة في الدقيقة، من Apple Health. يعكس معدل الراحة المنخفض لياقة قلبية أفضل. الارتفاعات أثناء التمرين طبيعية.',
+    ru: 'Активная частота пульса (при движении) и пульс в покое в ударах в минуту из Apple Health. Более низкий пульс в покое отражает лучшую сердечно-сосудистую форму. Скачки при нагрузке нормальны.',
+  );
+  String get infoSleep => _t(
+    en: 'Total sleep duration in hours each night, read from Apple Health. Includes all recorded sleep stages. Most adults need 7–9 hours; consistent shortfalls can affect mood, cognition and physical recovery.',
+    de: 'Gesamtschlafdauer in Stunden, aus Apple Health. Umfasst alle aufgezeichneten Schlafphasen. Die meisten Erwachsenen brauchen 7–9 Stunden; anhaltende Defizite können Stimmung, Kognition und Erholung beeinträchtigen.',
+    tr: 'Apple Health\'ten okunan her geceliki toplam uyku süresi (saat). Tüm kaydedilen uyku evrelerini içerir. Çoğu yetişkin 7–9 saate ihtiyaç duyar; sürekli eksiklik ruh halini ve iyileşmeyi etkileyebilir.',
+    es: 'Duración total del sueño en horas cada noche, de Apple Health. Incluye todas las fases del sueño. La mayoría de adultos necesita 7–9 horas; los déficits constantes afectan el estado de ánimo y la recuperación.',
+    it: 'Durata totale del sonno in ore ogni notte, da Apple Health. Include tutte le fasi. La maggior parte degli adulti ha bisogno di 7–9 ore; i deficit costanti influiscono sull\'umore e sul recupero fisico.',
+    fr: 'Durée totale du sommeil en heures chaque nuit, depuis Apple Health. Inclut toutes les phases de sommeil. La plupart des adultes ont besoin de 7–9 heures ; les déficits chroniques affectent l\'humeur et la récupération.',
+    zh: '每晚从Apple Health读取的总睡眠时长（小时）。包括所有睡眠阶段。大多数成人需要7–9小时；持续不足会影响情绪和身体恢复。',
+    ja: 'Apple Healthからの毎夜の総睡眠時間（時間）。すべての睡眠ステージを含みます。ほとんどの大人は7〜9時間必要で、慢性的な不足は気分と回復に影響します。',
+    ko: 'Apple Health에서 읽은 매일 밤 총 수면 시간. 모든 수면 단계를 포함합니다. 대부분의 성인은 7–9시간이 필요하며, 지속적인 부족은 기분과 신체 회복에 영향을 미칩니다.',
+    ar: 'إجمالي مدة النوم بالساعات كل ليلة من Apple Health. يشمل جميع مراحل النوم. يحتاج معظم البالغين إلى 7–9 ساعات؛ يمكن أن يؤثر العجز المستمر على المزاج والتعافي.',
+    ru: 'Общая продолжительность сна в часах каждую ночь из Apple Health. Включает все стадии сна. Большинству взрослых нужно 7–9 часов; постоянный недостаток влияет на настроение и восстановление.',
+  );
+  String get infoActiveEnergy => _t(
+    en: 'Calories burned through physical activity each day, from Apple Health. Excludes your basal metabolic rate (calories burned at rest). Higher values generally reflect more active days.',
+    de: 'Täglich durch körperliche Aktivität verbrannte Kalorien, aus Apple Health. Schließt den Grundumsatz aus. Höhere Werte spiegeln aktivere Tage wider.',
+    tr: 'Apple Health\'ten alınan her gün fiziksel aktivite yoluyla yakılan kaloriler. Bazal metabolizma hızını (dinlenme halinde yakılan kaloriler) içermez. Daha yüksek değerler genellikle daha aktif günleri yansıtır.',
+    es: 'Calorías quemadas por actividad física cada día, de Apple Health. Excluye el metabolismo basal. Los valores más altos reflejan días más activos.',
+    it: 'Calorie bruciate attraverso l\'attività fisica ogni giorno, da Apple Health. Esclude il metabolismo basale. Valori più alti riflettono giorni più attivi.',
+    fr: 'Calories brûlées par activité physique chaque jour, depuis Apple Health. Exclut le métabolisme de base. Des valeurs plus élevées reflètent des journées plus actives.',
+    zh: '每天通过体力活动燃烧的卡路里，来自Apple Health。不包括基础代谢率。较高的数值通常反映更活跃的一天。',
+    ja: 'Apple Healthからの毎日の身体活動による消費カロリー。基礎代謝量は除きます。値が高いほど活動的な日です。',
+    ko: 'Apple Health에서 제공하는 매일 신체 활동을 통해 소모된 칼로리. 기초대사율을 제외합니다. 높은 값은 더 활동적인 날을 반영합니다.',
+    ar: 'السعرات الحرارية المحروقة من النشاط البدني يومياً من Apple Health. يستثني معدل الأيض الأساسي. تعكس القيم الأعلى أياماً أكثر نشاطاً.',
+    ru: 'Калории, сожжённые физической активностью каждый день из Apple Health. Не включает базальный обмен веществ. Более высокие значения отражают более активные дни.',
+  );
+  String get infoWalkingSpeed => _t(
+    en: 'Average walking speed in km/h, from Apple Health. Typical adult walking speed is 4–6 km/h. A sustained downward trend may be worth discussing with your healthcare provider.',
+    de: 'Durchschnittliche Gehgeschwindigkeit in km/h, aus Apple Health. Typisch sind 4–6 km/h für Erwachsene. Ein anhaltender Rückgang kann mit dem Arzt besprochen werden.',
+    tr: 'Apple Health\'ten alınan ortalama yürüme hızı (km/s). Tipik yetişkin yürüme hızı 4–6 km/s\'dir. Sürekli düşen bir eğilim sağlık uzmanınızla görüşülmeye değer olabilir.',
+    es: 'Velocidad media de marcha en km/h, de Apple Health. La velocidad típica es 4–6 km/h. Una tendencia a la baja sostenida puede valer la pena discutirla con su médico.',
+    it: 'Velocità media di camminata in km/h, da Apple Health. La velocità tipica è 4–6 km/h. Un calo prolungato può essere discusso con il medico.',
+    fr: 'Vitesse de marche moyenne en km/h, depuis Apple Health. La vitesse typique est de 4–6 km/h. Une tendance à la baisse soutenue peut mériter d\'être discutée avec votre médecin.',
+    zh: '来自Apple Health的平均步行速度（千米/小时）。成人典型步行速度为4–6千米/小时。持续下降趋势可能值得与医疗保健提供者讨论。',
+    ja: 'Apple Healthからの平均歩行速度（km/h）。成人の典型的な速度は4〜6 km/hです。継続的な低下は医師に相談する価値があります。',
+    ko: 'Apple Health에서 제공하는 평균 보행 속도(km/h). 성인의 일반적인 속도는 4–6 km/h입니다. 지속적인 감소 추세는 의료 전문가와 상담할 가치가 있을 수 있습니다.',
+    ar: 'متوسط سرعة المشي بالكيلومتر في الساعة من Apple Health. السرعة النموذجية للبالغين 4–6 كم/ساعة. قد يستحق الانخفاض المستمر المناقشة مع مزود الرعاية الصحية.',
+    ru: 'Средняя скорость ходьбы в км/ч из Apple Health. Типичная скорость взрослого — 4–6 км/ч. Устойчивое снижение может стоить обсуждения с врачом.',
+  );
+  String get infoDistance => _t(
+    en: 'Total walking and running distance in kilometres each day, from Apple Health. Combines movement data from your iPhone and Apple Watch. Useful for tracking overall daily mobility.',
+    de: 'Täglich zurückgelegte Geh- und Laufdistanz in Kilometern, aus Apple Health. Kombiniert Bewegungsdaten von iPhone und Apple Watch. Nützlich zur Verfolgung der allgemeinen täglichen Mobilität.',
+    tr: 'Apple Health\'ten alınan her gün yürünen ve koşulan toplam mesafe (kilometre). iPhone ve Apple Watch hareket verilerini birleştirir. Genel günlük hareketliliği takip etmek için kullanışlıdır.',
+    es: 'Distancia total caminada y corrida en kilómetros cada día, de Apple Health. Combina los datos de movimiento de iPhone y Apple Watch. Útil para rastrear la movilidad diaria general.',
+    it: 'Distanza totale percorsa e corsa in chilometri ogni giorno, da Apple Health. Combina i dati di movimento di iPhone e Apple Watch. Utile per monitorare la mobilità quotidiana complessiva.',
+    fr: 'Distance totale marche et course en kilomètres chaque jour, depuis Apple Health. Combine les données de mouvement de votre iPhone et Apple Watch. Utile pour suivre la mobilité quotidienne globale.',
+    zh: '每天步行和跑步的总距离（千米），来自Apple Health。结合了iPhone和Apple Watch的运动数据。有助于跟踪每日整体活动能力。',
+    ja: 'Apple Healthからの毎日の歩行・ランニング総距離（km）。iPhoneとApple Watchの動作データを組み合わせます。日常的な移動能力の追跡に役立ちます。',
+    ko: 'Apple Health에서 제공하는 매일 걷고 달린 총 거리(킬로미터). iPhone과 Apple Watch의 이동 데이터를 결합합니다. 전반적인 일상 이동성을 추적하는 데 유용합니다.',
+    ar: 'إجمالي مسافة المشي والجري يومياً بالكيلومترات من Apple Health. يجمع بيانات الحركة من iPhone وApple Watch. مفيد لتتبع حركة الجسم اليومية.',
+    ru: 'Общее расстояние ходьбы и бега в километрах каждый день из Apple Health. Объединяет данные iPhone и Apple Watch. Полезно для отслеживания ежедневной подвижности.',
+  );
+  String get infoWeight => _t(
+    en: 'Body weight in kilograms, entered manually during your daily check-in. Tracking weight alongside wellbeing and activity data can help identify longer-term trends.',
+    de: 'Körpergewicht in Kilogramm, manuell beim täglichen Check-in eingegeben. Die Verfolgung zusammen mit Wohlbefindens- und Aktivitätsdaten kann langfristige Trends aufzeigen.',
+    tr: 'Günlük check-in sırasında manuel olarak girilen kilogram cinsinden vücut ağırlığı. Ağırlığı iyilik hali ve aktivite verileriyle birlikte takip etmek uzun vadeli eğilimleri belirlemeye yardımcı olabilir.',
+    es: 'Peso corporal en kilogramos, introducido manualmente durante el check-in diario. Rastrear el peso con datos de bienestar y actividad puede ayudar a identificar tendencias a largo plazo.',
+    it: 'Peso corporeo in chilogrammi, inserito manualmente durante il check-in giornaliero. Monitorare il peso insieme ai dati di benessere e attività può aiutare a identificare tendenze a lungo termine.',
+    fr: 'Poids corporel en kilogrammes, saisi manuellement lors du check-in quotidien. Suivre le poids avec les données de bien-être et d\'activité peut aider à identifier des tendances à long terme.',
+    zh: '每日打卡时手动输入的体重（千克）。将体重与健康状况和活动数据一起跟踪，有助于识别长期趋势。',
+    ja: '毎日のチェックイン時に手動で入力された体重（kg）。体重を健康度や活動データと一緒に追跡することで長期的な傾向を特定するのに役立ちます。',
+    ko: '매일 체크인 중 수동으로 입력한 체중(킬로그램). 웰빙 및 활동 데이터와 함께 체중을 추적하면 장기적인 추세를 파악하는 데 도움이 됩니다.',
+    ar: 'وزن الجسم بالكيلوغرام، مُدخَل يدوياً أثناء تسجيل الدخول اليومي. يمكن أن يساعد تتبع الوزن مع بيانات الصحة والنشاط في تحديد الاتجاهات طويلة الأمد.',
+    ru: 'Масса тела в кг, введённая вручную при ежедневной отметке. Отслеживание веса наряду с данными о самочувствии и активности помогает выявлять долгосрочные тенденции.',
+  );
+  String get infoBmi => _t(
+    en: 'Body Mass Index calculated from your weight and stored height (weight ÷ height²). Reference ranges: below 18.5 = underweight, 18.5–25 = healthy, 25–30 = overweight, 30+ = obese. BMI is a screening tool, not a diagnostic measure.',
+    de: 'Body-Mass-Index aus Gewicht und gespeicherter Körpergröße (Gewicht ÷ Größe²). Referenzbereiche: unter 18,5 = Untergewicht, 18,5–25 = gesund, 25–30 = Übergewicht, 30+ = adipös. BMI ist ein Screening-Werkzeug.',
+    tr: 'Ağırlığınız ve kayıtlı boyunuzdan hesaplanan Vücut Kitle İndeksi (ağırlık ÷ boy²). Referans aralıkları: 18,5 altı = zayıf, 18,5–25 = sağlıklı, 25–30 = kilolu, 30+ = obez. VKİ bir tarama aracıdır, tanı ölçütü değildir.',
+    es: 'Índice de Masa Corporal calculado a partir del peso y la altura almacenada (peso ÷ altura²). Rangos: menos de 18,5 = bajo peso, 18,5–25 = saludable, 25–30 = sobrepeso, 30+ = obeso. El IMC es una herramienta de cribado.',
+    it: 'Indice di Massa Corporea calcolato da peso e altezza memorizzata (peso ÷ altezza²). Intervalli: sotto 18,5 = sottopeso, 18,5–25 = sano, 25–30 = sovrappeso, 30+ = obeso. Il BMI è uno strumento di screening.',
+    fr: 'Indice de Masse Corporelle calculé à partir du poids et de la taille enregistrée (poids ÷ taille²). Plages : moins de 18,5 = sous-poids, 18,5–25 = sain, 25–30 = surpoids, 30+ = obèse. L\'IMC est un outil de dépistage.',
+    zh: '根据体重和存储身高计算的身体质量指数（体重÷身高²）。参考范围：18.5以下=体重不足，18.5–25=健康，25–30=超重，30+=肥胖。BMI是筛查工具，不是诊断指标。',
+    ja: '体重と記録された身長から計算されたBMI（体重÷身長²）。参考範囲：18.5未満=低体重、18.5–25=健康、25–30=過体重、30+=肥満。BMIはスクリーニングツールです。',
+    ko: '체중과 저장된 키로 계산된 체질량지수(체중÷키²). 참고 범위: 18.5 미만=저체중, 18.5–25=정상, 25–30=과체중, 30+=비만. BMI는 선별 도구이며 진단 척도가 아닙니다.',
+    ar: 'مؤشر كتلة الجسم محسوب من الوزن والطول المخزَّن (الوزن ÷ الطول²). النطاقات: أقل من 18.5 = نقص الوزن، 18.5–25 = صحي، 25–30 = زيادة، 30+ = بدانة. مؤشر كتلة الجسم أداة فحص.',
+    ru: 'Индекс массы тела из веса и сохранённого роста (вес ÷ рост²). Диапазоны: ниже 18,5 = недостаточный вес, 18,5–25 = норма, 25–30 = избыточный вес, 30+ = ожирение. ИМТ — инструмент скрининга.',
+  );
+  String get infoFlights => _t(
+    en: 'Number of floors climbed each day, from Apple Health. One flight corresponds to approximately 3 metres of elevation gain. Climbing stairs regularly contributes to cardiovascular health.',
+    de: 'Täglich erklommene Stockwerke, aus Apple Health. Ein Stockwerk entspricht ca. 3 Metern Höhenanstieg. Regelmäßiges Treppensteigen trägt zur kardiovaskulären Gesundheit bei.',
+    tr: 'Apple Health\'ten alınan her gün tırmanılan kat sayısı. Bir kat yaklaşık 3 metre yüksekliğe karşılık gelir. Düzenli merdiven çıkmak kardiyovasküler sağlığa katkıda bulunur.',
+    es: 'Número de pisos subidos cada día, de Apple Health. Un piso corresponde a aproximadamente 3 metros de desnivel. Subir escaleras regularmente contribuye a la salud cardiovascular.',
+    it: 'Numero di piani scalati ogni giorno, da Apple Health. Un piano corrisponde a circa 3 metri di dislivello. Salire le scale regolarmente contribuisce alla salute cardiovascolare.',
+    fr: 'Nombre d\'étages montés chaque jour, depuis Apple Health. Un étage correspond à environ 3 mètres de dénivelé. Monter les escaliers régulièrement est bénéfique pour le cœur.',
+    zh: '来自Apple Health的每天爬楼层数。一层楼约对应3米的爬升高度。定期爬楼梯有助于心血管健康。',
+    ja: 'Apple Healthからの毎日の登った階数。1フロアは約3メートルの高低差です。定期的な階段上りは心臓血管の健康に貢献します。',
+    ko: 'Apple Health에서 제공하는 매일 오른 층 수. 한 층은 약 3미터의 고도 차이에 해당합니다. 정기적인 계단 오르기는 심혈관 건강에 기여합니다.',
+    ar: 'عدد الطوابق المصعودة يومياً من Apple Health. يعادل طابق واحد ما يقارب 3 أمتار. يسهم صعود الدرج بانتظام في صحة القلب والأوعية الدموية.',
+    ru: 'Количество подъёмов на этажи каждый день из Apple Health. Один этаж соответствует примерно 3 метрам набора высоты. Регулярный подъём по лестнице полезен для сердечно-сосудистой системы.',
+  );
+  String get infoStepLength => _t(
+    en: 'Average length of each step in centimetres, measured by your iPhone\'s motion sensors and read from Apple Health. Typical adult step length is 60–80 cm. A shortening trend over time may indicate gait changes worth monitoring.',
+    de: 'Durchschnittliche Schrittlänge in Zentimetern, von den Bewegungssensoren des iPhone gemessen. Typisch sind 60–80 cm. Ein zunehmend kürzerer Trend kann auf Gangveränderungen hinweisen.',
+    tr: 'iPhone\'unuzun hareket sensörleri tarafından ölçülen ve Apple Health\'ten okunan her adımın ortalama uzunluğu (santimetre). Tipik yetişkin adım uzunluğu 60–80 cm\'dir. Zaman içindeki kısalma eğilimi izlemeye değer yürüyüş değişikliklerini işaret edebilir.',
+    es: 'Longitud media de cada paso en centímetros, medida por los sensores de movimiento del iPhone. La longitud típica es 60–80 cm. Una tendencia a acortarse con el tiempo puede indicar cambios en la marcha.',
+    it: 'Lunghezza media di ogni passo in centimetri, misurata dai sensori di movimento dell\'iPhone. La lunghezza tipica è 60–80 cm. Un accorciamento progressivo può indicare cambiamenti nell\'andatura.',
+    fr: 'Longueur moyenne de chaque pas en centimètres, mesurée par les capteurs de mouvement de l\'iPhone. La longueur typique est 60–80 cm. Une tendance à raccourcir peut signaler des changements de marche.',
+    zh: '由iPhone运动传感器测量并从Apple Health读取的每步平均长度（厘米）。成人典型步长为60–80厘米。随时间缩短的趋势可能表明值得关注的步态变化。',
+    ja: 'iPhoneのモーションセンサーで測定した1歩の平均長さ（cm）。成人の典型は60〜80 cmです。時間の経過とともに短くなる傾向は歩行の変化を示す場合があります。',
+    ko: 'iPhone의 모션 센서로 측정한 각 걸음의 평균 길이(센티미터). 성인의 일반적인 보폭은 60–80cm입니다. 시간에 따른 단축 추세는 보행 변화를 나타낼 수 있습니다.',
+    ar: 'متوسط طول كل خطوة بالسنتيمتر، مقاس بمستشعرات الحركة في iPhone. الطول النموذجي للبالغين 60–80 سم. قد يشير الاتجاه نحو التقصير إلى تغيرات في المشية تستحق المراقبة.',
+    ru: 'Средняя длина шага в сантиметрах, измеренная датчиками iPhone. Типичная длина — 60–80 см. Тенденция к укорочению может указывать на изменения в походке, требующие наблюдения.',
+  );
+  String get infoGaitAnalysis => _t(
+    en: 'Three gait quality indicators from Apple Health. Asymmetry measures the difference between left and right steps — lower means more symmetrical. Double support is the share of time both feet are on the ground. Steadiness is Apple\'s composite walking stability score (higher is better).',
+    de: 'Drei Gangqualitätsindikatoren aus Apple Health. Asymmetrie misst den Unterschied zwischen linkem und rechtem Schritt — niedriger ist symmetrischer. Doppelstütz ist der Zeitanteil mit beiden Füßen am Boden. Stabilität ist Apples Gangstabilitätswert (höher = besser).',
+    tr: 'Apple Health\'ten üç yürüyüş kalitesi göstergesi. Asimetri, sol ve sağ adımlar arasındaki farkı ölçer — düşük = daha simetrik. Çift destek, her iki ayağın yerde olduğu sürenin oranıdır. Denge, Apple\'ın bileşik yürüyüş kararlılık puanıdır (yüksek = daha iyi).',
+    es: 'Tres indicadores de calidad de la marcha de Apple Health. La asimetría mide la diferencia entre pasos izquierdo y derecho — menor significa más simétrico. El doble apoyo es la proporción de tiempo con ambos pies en el suelo. La estabilidad es la puntuación compuesta de Apple (mayor es mejor).',
+    it: 'Tre indicatori di qualità dell\'andatura da Apple Health. L\'asimmetria misura la differenza tra passo sinistro e destro — minore è più simmetrico. Il doppio appoggio è la quota di tempo con entrambi i piedi a terra. La stabilità è il punteggio composto di Apple (maggiore = meglio).',
+    fr: 'Trois indicateurs de qualité de la marche d\'Apple Health. L\'asymétrie mesure la différence entre pas gauche et droit — faible = plus symétrique. Le double appui est la part du temps les deux pieds au sol. La stabilité est le score composite d\'Apple (plus élevé = mieux).',
+    zh: '来自Apple Health的三个步态质量指标。不对称性衡量左右步之间的差异——越低越对称。双支撑是双脚同时着地的时间比例。稳定性是Apple的综合步行稳定性评分（越高越好）。',
+    ja: 'Apple Healthの3つの歩行品質指標。非対称性は左右の歩みの差を測定します（低いほど対称）。両脚支持時間は両足が地面にある時間の割合。安定性はAppleの総合歩行安定性スコアです（高いほど良い）。',
+    ko: 'Apple Health의 세 가지 보행 품질 지표. 비대칭은 왼쪽과 오른쪽 걸음의 차이를 측정합니다(낮을수록 대칭). 이중 지지는 양발이 모두 지면에 있는 시간의 비율입니다. 안정성은 Apple의 종합 보행 안정성 점수입니다(높을수록 좋음).',
+    ar: 'ثلاثة مؤشرات لجودة المشية من Apple Health. يقيس عدم التماثل الفرق بين الخطوتين اليسرى واليمنى — أقل يعني أكثر تماثلاً. الدعم المزدوج هو نسبة الوقت الذي يكون فيه كلا القدمين على الأرض. الثبات هو درجة Apple الشاملة (أعلى = أفضل).',
+    ru: 'Три показателя качества походки из Apple Health. Асимметрия измеряет разницу между левым и правым шагами — ниже означает симметричнее. Двойная опора — доля времени с обеими ногами на земле. Устойчивость — сводный показатель Apple (выше = лучше).',
+  );
+  String get infoAsymmetry => _t(
+    en: 'Measures the timing difference between your left and right steps, expressed as a percentage. Lower values mean more symmetrical walking — 0% would be perfectly even. Values consistently above 10–15% may indicate a gait imbalance worth discussing with a healthcare provider.',
+    de: 'Misst den Zeitunterschied zwischen linkem und rechtem Schritt in Prozent. Niedrigere Werte bedeuten symmetrischeres Gehen — 0% wäre perfekt ausgeglichen. Dauerhaft über 10–15% kann auf ein Gangungleichgewicht hinweisen.',
+    tr: 'Sol ve sağ adım zamanlaması arasındaki farkı yüzde olarak ölçer. Düşük değerler daha simetrik yürüyüşü gösterir — 0% tam denge anlamına gelir. Sürekli %10–15 üzerindeki değerler bir sağlık uzmanıyla değerlendirilmeye değer olabilir.',
+    es: 'Mide la diferencia de tiempo entre el paso izquierdo y el derecho en porcentaje. Los valores más bajos significan una marcha más simétrica. Valores superiores al 10–15% de forma consistente pueden indicar un desequilibrio de la marcha.',
+    it: 'Misura la differenza temporale tra il passo sinistro e quello destro in percentuale. Valori più bassi significano un\'andatura più simmetrica. Valori costantemente oltre il 10–15% possono indicare uno squilibrio nell\'andatura.',
+    fr: 'Mesure la différence temporelle entre le pas gauche et le pas droit en pourcentage. Des valeurs plus faibles indiquent une marche plus symétrique. Des valeurs constamment supérieures à 10–15% peuvent indiquer un déséquilibre de la marche.',
+    zh: '以百分比衡量左右步之间的时间差异。数值越低表示步行越对称——0%表示完全均匀。持续超过10–15%的值可能表明值得与医疗保健提供者讨论的步态失衡。',
+    ja: '左右の歩みのタイミングの差をパーセントで測定します。低い値ほど対称的な歩行を意味します。10〜15%を超える値が続く場合は、歩行の不均衡を示す可能性があります。',
+    ko: '왼쪽과 오른쪽 발걸음 사이의 타이밍 차이를 백분율로 측정합니다. 낮은 값일수록 더 대칭적인 걷기를 의미합니다. 10–15%를 지속적으로 초과하는 값은 보행 불균형을 나타낼 수 있습니다.',
+    ar: 'يقيس فرق التوقيت بين الخطوة اليسرى واليمنى كنسبة مئوية. تعني القيم المنخفضة مشياً أكثر تماثلاً. القيم التي تتجاوز 10–15% باستمرار قد تشير إلى اختلال في المشية.',
+    ru: 'Измеряет разницу во времени между левым и правым шагом в процентах. Более низкие значения означают более симметричную ходьбу. Значения выше 10–15% могут указывать на дисбаланс походки.',
+  );
+  String get infoDblSupport => _t(
+    en: 'The percentage of each walking cycle when both feet are on the ground simultaneously. Higher values often reflect a slower, more cautious gait. Typical values are around 20–30%; significantly higher values may indicate reduced balance confidence or a gait challenge.',
+    de: 'Der Prozentsatz jedes Schrittzyklus, in dem beide Füße gleichzeitig am Boden sind. Höhere Werte spiegeln oft einen langsameren, vorsichtigeren Gang wider. Typische Werte liegen bei 20–30%; deutlich höhere Werte können auf Gleichgewichtsprobleme hinweisen.',
+    tr: 'Her yürüyüş döngüsünde her iki ayağın aynı anda yerde olduğu yüzde. Daha yüksek değerler genellikle daha yavaş, temkinli bir yürüyüşü yansıtır. Tipik değerler yaklaşık %20–30\'dur; belirgin şekilde yüksek değerler denge güçlüğüne işaret edebilir.',
+    es: 'El porcentaje de cada ciclo de marcha en que ambos pies están en el suelo simultáneamente. Los valores más altos reflejan una marcha más lenta y cautelosa. Los valores típicos son del 20–30%; valores significativamente más altos pueden indicar problemas de equilibrio.',
+    it: 'La percentuale di ogni ciclo di camminata in cui entrambi i piedi sono a terra contemporaneamente. Valori più alti spesso riflettono un\'andatura più lenta e cauta. I valori tipici sono intorno al 20–30%; valori significativamente più alti possono indicare sfide di equilibrio.',
+    fr: 'Le pourcentage de chaque cycle de marche pendant lequel les deux pieds sont simultanément au sol. Des valeurs plus élevées reflètent souvent une marche plus lente et prudente. Les valeurs typiques sont d\'environ 20–30%; des valeurs nettement plus élevées peuvent indiquer des problèmes d\'équilibre.',
+    zh: '每个步行周期中两脚同时着地的百分比。较高的数值通常反映更慢、更谨慎的步态。典型值约为20–30%；显著偏高的值可能表明平衡困难。',
+    ja: '各歩行サイクルで両足が同時に地面に接している時間の割合。高い値は、より遅く慎重な歩行を反映することが多いです。典型的な値は20〜30%程度で、著しく高い値はバランスの問題を示す可能性があります。',
+    ko: '각 보행 주기에서 양발이 동시에 지면에 있는 비율. 높은 값은 종종 더 느리고 조심스러운 보행을 반영합니다. 일반적인 값은 약 20–30%이며, 현저히 높은 값은 균형 문제를 나타낼 수 있습니다.',
+    ar: 'النسبة المئوية من كل دورة مشي تكون فيها كلتا القدمين على الأرض في وقت واحد. تعكس القيم الأعلى في الغالب مشياً أبطأ وأكثر تحفظاً. القيم النموذجية حوالي 20–30%؛ قد تشير القيم الأعلى بكثير إلى تحديات في التوازن.',
+    ru: 'Процент каждого цикла ходьбы, когда обе ноги одновременно находятся на земле. Более высокие значения часто отражают более медленную, осторожную походку. Типичные значения — около 20–30%; значительно более высокие значения могут указывать на проблемы с балансом.',
+  );
+  String get infoSteadiness => _t(
+    en: 'Apple\'s overall walking balance score expressed as a percentage. It reflects how consistent and controlled your walking pattern is across all steps. Higher is better — scores consistently below 80% may be worth monitoring and discussing with your healthcare provider.',
+    de: 'Apples Gesamtbewertung der Gangstabilität in Prozent. Sie spiegelt wider, wie konsistent und kontrolliert Ihr Gangmuster über alle Schritte ist. Höher ist besser — dauerhaft unter 80% kann es wert sein, dies mit dem Arzt zu besprechen.',
+    tr: 'Apple\'ın yüzde olarak ifade edilen genel yürüyüş dengesi puanı. Tüm adımlarınızdaki yürüyüş örüntünüzün ne kadar tutarlı ve kontrollü olduğunu yansıtır. Yüksek değerler daha iyidir — sürekli %80 altındaki değerler bir sağlık uzmanıyla görüşülmeye değer olabilir.',
+    es: 'La puntuación general de equilibrio al caminar de Apple, expresada en porcentaje. Refleja la consistencia y el control de tu patrón de marcha en todos los pasos. Mayor es mejor — puntuaciones consistentemente por debajo del 80% pueden valer la pena discutirlas con su médico.',
+    it: 'Il punteggio complessivo di stabilità della camminata di Apple, espresso in percentuale. Riflette quanto sia costante e controllato il tuo schema di camminata. Maggiore è meglio — punteggi costantemente sotto l\'80% possono valere la pena di essere discussi con il medico.',
+    fr: 'Le score global de stabilité de marche d\'Apple, exprimé en pourcentage. Il reflète la cohérence et le contrôle de votre schéma de marche sur tous les pas. Plus élevé est mieux — des scores constamment inférieurs à 80% peuvent mériter d\'être discutés avec votre médecin.',
+    zh: 'Apple的整体步行稳定性评分，以百分比表示。它反映了您所有步骤中步行模式的一致性和控制性。越高越好——持续低于80%的分数可能值得与医疗保健提供者讨论。',
+    ja: 'Appleの全体的な歩行安定性スコア（パーセント）。すべての歩みにわたる歩行パターンの一貫性と制御を反映します。高いほど良い — 常に80%を下回る場合は医師に相談する価値があります。',
+    ko: '백분율로 표현된 Apple의 전반적인 보행 안정성 점수. 모든 걸음에 걸친 보행 패턴의 일관성과 제어력을 반영합니다. 높을수록 좋습니다 — 지속적으로 80% 미만인 점수는 의료 전문가와 상담할 가치가 있을 수 있습니다.',
+    ar: 'درجة استقرار المشية الشاملة من Apple مُعبَّراً عنها كنسبة مئوية. تعكس مدى اتساق وتحكم نمط مشيتك عبر جميع الخطوات. أعلى أفضل — قد تستحق الدرجات التي تقل باستمرار عن 80% مناقشتها مع مزود الرعاية الصحية.',
+    ru: 'Общий показатель устойчивости ходьбы Apple, выраженный в процентах. Отражает последовательность и контроль вашей походки на всех шагах. Выше — лучше; оценки стабильно ниже 80% могут стоить обсуждения с врачом.',
+  );
+  String get infoHeadphoneAudio => _t(
+    en: 'Average loudness of audio played through your headphones in dB(A), from Apple Health. WHO recommends keeping average listening levels below 70 dB(A) to protect long-term hearing. Values above 80 dB(A) carry a risk of hearing damage with prolonged exposure.',
+    de: 'Durchschnittliche Lautstärke über Kopfhörer in dB(A), aus Apple Health. Die WHO empfiehlt, den Hörpegel unter 70 dB(A) zu halten. Werte über 80 dB(A) können bei längerer Exposition zu Hörschäden führen.',
+    tr: 'Apple Health tarafından ölçülen kulaklıklarınızdan çalan sesin ortalama yüksekliği (dB(A)). DSÖ, uzun vadeli işitmeyi korumak için ortalama dinleme seviyelerinin 70 dB(A)\'nın altında tutulmasını önerir. 80 dB(A) üzeri değerler uzun süreli maruziyetle işitme hasarı riski taşır.',
+    es: 'Nivel sonoro medio del audio reproducido con auriculares en dB(A), de Apple Health. La OMS recomienda mantener los niveles de escucha por debajo de 70 dB(A). Los valores superiores a 80 dB(A) conllevan riesgo de daño auditivo.',
+    it: 'Volume medio dell\'audio tramite cuffie in dB(A), da Apple Health. L\'OMS raccomanda livelli di ascolto sotto 70 dB(A). Valori sopra 80 dB(A) comportano rischi per l\'udito con esposizione prolungata.',
+    fr: 'Niveau sonore moyen du son diffusé via écouteurs en dB(A), depuis Apple Health. L\'OMS recommande des niveaux d\'écoute sous 70 dB(A). Des valeurs supérieures à 80 dB(A) présentent un risque auditif.',
+    zh: 'Apple Health测量的通过耳机播放的音频平均响度（dB(A)）。世卫组织建议平均听音水平低于70 dB(A)以保护听力。超过80 dB(A)的值在长期暴露下有听力损伤风险。',
+    ja: 'Apple HealthからのヘッドフォンのdB(A)での平均音量。WHOは長期的な聴力保護のため平均70 dB(A)以下を推奨します。80 dB(A)以上は長時間暴露で聴力損傷のリスクがあります。',
+    ko: 'Apple Health에서 측정한 이어폰 오디오의 평균 음량(dB(A)). WHO는 장기적인 청력 보호를 위해 평균 70 dB(A) 미만을 권장합니다. 80 dB(A) 이상은 장기 노출 시 청력 손상 위험이 있습니다.',
+    ar: 'متوسط مستوى صوت الصوت عبر السماعات بـ dB(A) من Apple Health. توصي منظمة الصحة العالمية بإبقاء مستويات الاستماع دون 70 dB(A). تحمل القيم فوق 80 dB(A) خطر تلف السمع مع التعرض المطول.',
+    ru: 'Средняя громкость аудио через наушники в дБ(А) из Apple Health. ВОЗ рекомендует поддерживать уровень прослушивания ниже 70 дБ(А). Значения выше 80 дБ(А) несут риск повреждения слуха при длительном воздействии.',
+  );
+  String get infoMenstrual => _t(
+    en: 'Shows whether you reported being on your menstrual period for each day. Filled drops indicate period days; open circles indicate non-period days. Useful for correlating menstrual phase with your pain levels and wellbeing scores.',
+    de: 'Zeigt an, ob Sie eine Menstruation für jeden Tag gemeldet haben. Gefüllte Tropfen = Periodentage; offene Kreise = Nicht-Periodentage. Nützlich zur Korrelation der Menstruationsphase mit Schmerz- und Wohlbefindenswerten.',
+    tr: 'Her gün için adet döneminde olup olmadığınızı bildirip bildirmediğinizi gösterir. Dolu damlalar adet günlerini, açık daireler adet dışı günleri belirtir. Adet fazını ağrı seviyeleri ve iyilik hali puanlarıyla ilişkilendirmek için kullanışlıdır.',
+    es: 'Muestra si informaste estar en tu período menstrual para cada día. Las gotas rellenas son días de período; los círculos abiertos son días sin período. Útil para correlacionar la fase menstrual con niveles de dolor y bienestar.',
+    it: 'Mostra se hai segnalato di essere in periodo mestruale per ogni giorno. Le gocce piene sono giorni del ciclo; i cerchi aperti giorni fuori ciclo. Utile per correlare la fase mestruale con dolore e benessere.',
+    fr: 'Indique si vous avez signalé être en période menstruelle pour chaque jour. Les gouttes remplies = jours de règles ; cercles ouverts = jours sans règles. Utile pour corréler la phase menstruelle avec douleur et bien-être.',
+    zh: '显示您每天是否报告处于月经期。实心水滴表示月经日；空心圆圈表示非月经日。有助于将月经周期与疼痛水平和健康评分相关联。',
+    ja: '各日に月経期間を報告したかどうかを示します。塗りつぶしの水滴は月経日、開いた円は非月経日です。月経フェーズと痛みのレベルおよび健康スコアを関連付けるのに役立ちます。',
+    ko: '각 날에 월경 중임을 보고했는지 여부를 보여줍니다. 채워진 방울은 월경일, 빈 원은 비월경일입니다. 월경 단계를 통증 수준 및 웰빙 점수와 연관 짓는 데 유용합니다.',
+    ar: 'يُظهر ما إذا كنتِ أبلغتِ عن الدورة الشهرية لكل يوم. القطرات المملوءة هي أيام الدورة؛ الدوائر المفتوحة هي الأيام خارجها. مفيد للربط بين مرحلة الدورة ومستويات الألم والرفاهية.',
+    ru: 'Показывает, сообщали ли вы о менструации в каждый день. Заполненные капли — дни менструации; открытые круги — дни без неё. Полезно для корреляции фазы цикла с уровнями боли и самочувствием.',
+  );
+
   String get heightCm => _t(en: 'Height (cm)', de: 'Größe (cm)', tr: 'Boy (cm)', es: 'Altura (cm)', it: 'Altezza (cm)', fr: 'Taille (cm)', zh: '身高 (cm)', ja: '身長 (cm)', ko: '키 (cm)', ar: 'الطول (سم)', ru: 'Рост (см)');
   String get heightError => _t(en: 'Enter a valid height (100–250 cm)', de: 'Gültige Größe eingeben (100–250 cm)', tr: 'Geçerli bir boy girin (100–250 cm)', es: 'Introduce una altura válida (100–250 cm)', it: 'Inserisci un\'altezza valida (100–250 cm)', fr: 'Entrez une taille valide (100–250 cm)', zh: '请输入有效身高 (100–250 cm)', ja: '有効な身長を入力してください (100–250 cm)', ko: '올바른 키를 입력하세요 (100–250 cm)', ar: 'أدخل طولاً صحيحاً (100–250 سم)', ru: 'Введите корректный рост (100–250 см)');
   String get weightKg => _t(en: 'Weight (kg)', de: 'Gewicht (kg)', tr: 'Kilo (kg)', es: 'Peso (kg)', it: 'Peso (kg)', fr: 'Poids (kg)', zh: '体重 (kg)', ja: '体重 (kg)', ko: '체중 (kg)', ar: 'الوزن (كجم)', ru: 'Вес (кг)');
@@ -272,6 +535,10 @@ class AppLocalizations {
   String get saveChanges => _t(en: 'Save Changes', de: 'Änderungen speichern', tr: 'Değişiklikleri Kaydet', es: 'Guardar cambios', it: 'Salva modifiche', fr: 'Enregistrer', zh: '保存更改', ja: '変更を保存', ko: '변경 저장', ar: 'حفظ التغييرات', ru: 'Сохранить');
   String get changePassword => _t(en: 'Change Password', de: 'Passwort ändern', tr: 'Şifre Değiştir', es: 'Cambiar contraseña', it: 'Cambia password', fr: 'Changer le mot de passe', zh: '更改密码', ja: 'パスワード変更', ko: '비밀번호 변경', ar: 'تغيير كلمة المرور', ru: 'Сменить пароль');
   String get newPassword => _t(en: 'New Password', de: 'Neues Passwort', tr: 'Yeni Şifre', es: 'Nueva contraseña', it: 'Nuova password', fr: 'Nouveau mot de passe', zh: '新密码', ja: '新しいパスワード', ko: '새 비밀번호', ar: 'كلمة المرور الجديدة', ru: 'Новый пароль');
+  String get addPhoto => _t(en: 'Add Photo (optional)', de: 'Foto hinzufügen (optional)', tr: 'Fotoğraf Ekle (isteğe bağlı)', es: 'Añadir foto (opcional)', it: 'Aggiungi foto (opzionale)', fr: 'Ajouter une photo (optionnel)', zh: '添加照片（可选）', ja: '写真を追加（任意）', ko: '사진 추가 (선택)', ar: 'إضافة صورة (اختياري)', ru: 'Добавить фото (необязательно)');
+  String get photoFromGallery => _t(en: 'Choose from Library', de: 'Aus Bibliothek wählen', tr: 'Galeriden Seç', es: 'Elegir de la biblioteca', it: 'Scegli dalla libreria', fr: 'Choisir depuis la bibliothèque', zh: '从相册选择', ja: 'ライブラリから選択', ko: '갤러리에서 선택', ar: 'اختر من المكتبة', ru: 'Выбрать из галереи');
+  String get photoFromCamera => _t(en: 'Take Photo', de: 'Foto aufnehmen', tr: 'Fotoğraf Çek', es: 'Tomar foto', it: 'Scatta una foto', fr: 'Prendre une photo', zh: '拍照', ja: '写真を撮る', ko: '사진 찍기', ar: 'التقط صورة', ru: 'Сделать фото');
+  String get removePhoto => _t(en: 'Remove Photo', de: 'Foto entfernen', tr: 'Fotoğrafı Kaldır', es: 'Eliminar foto', it: 'Rimuovi foto', fr: 'Supprimer la photo', zh: '删除照片', ja: '写真を削除', ko: '사진 삭제', ar: 'إزالة الصورة', ru: 'Удалить фото');
   String get profileUpdated => _t(en: 'Profile updated successfully', de: 'Profil erfolgreich aktualisiert', tr: 'Profil başarıyla güncellendi', es: 'Perfil actualizado correctamente', it: 'Profilo aggiornato con successo', fr: 'Profil mis à jour avec succès', zh: '个人信息已成功更新', ja: 'プロフィールを更新しました', ko: '프로필이 성공적으로 업데이트되었습니다', ar: 'تم تحديث الملف الشخصي بنجاح', ru: 'Профиль успешно обновлён');
   String get passwordChanged => _t(en: 'Password changed successfully', de: 'Passwort erfolgreich geändert', tr: 'Şifre başarıyla değiştirildi', es: 'Contraseña cambiada correctamente', it: 'Password modificata con successo', fr: 'Mot de passe modifié avec succès', zh: '密码已成功更改', ja: 'パスワードを変更しました', ko: '비밀번호가 성공적으로 변경되었습니다', ar: 'تم تغيير كلمة المرور بنجاح', ru: 'Пароль успешно изменён');
   String get appearance => _t(en: 'Appearance', de: 'Erscheinungsbild', tr: 'Görünüm', es: 'Apariencia', it: 'Aspetto', fr: 'Apparence', zh: '外观', ja: '外観', ko: '외관', ar: 'المظهر', ru: 'Внешний вид');

@@ -8,12 +8,14 @@ import 'package:intl/intl.dart';
 
 import '../l10n/app_localizations.dart';
 import '../services/health_service.dart';
+import '../services/native_health_service.dart';
 import '../services/storage_service.dart';
 import '../services/supabase_service.dart';
 import '../widgets/app_bar_title.dart';
 import '../widgets/fade_slide_in.dart';
 
 typedef _Pt = ({DateTime date, double value});
+typedef _RangePt = ({DateTime date, double avg, double min, double max});
 
 class _Series {
   final List<_Pt> data;
@@ -39,8 +41,11 @@ class HistoryScreen extends StatefulWidget {
 class _HistoryScreenState extends State<HistoryScreen> {
   List<Map<String, dynamic>> _history = [];
   List<({DateTime date, int steps})> _weekSteps = [];
+  Map<String, dynamic> _weekHealth = {};
+  Map<String, List<_RangePt>> _weekNative = {};
   bool _loading = true;
   bool _stepsLoading = false;
+  bool _healthLoading = false;
   int _weekOffset = 0;
   int? _userHeightCm;
 
@@ -84,6 +89,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     List<({DateTime date, int steps})> steps = [];
     if (widget.healthGranted) steps = await widget.healthService.getStepsInRange(_weekStart);
     if (mounted) setState(() { _history = h; _weekSteps = steps; _loading = false; });
+    _loadWeekHealthData();
   }
 
   Future<void> _loadWeekSteps() async {
@@ -93,9 +99,24 @@ class _HistoryScreenState extends State<HistoryScreen> {
     if (mounted) setState(() { _weekSteps = steps; _stepsLoading = false; });
   }
 
+  Future<void> _loadWeekHealthData() async {
+    if (!widget.healthGranted) return;
+    if (mounted) setState(() => _healthLoading = true);
+    final health = await widget.healthService.getWeeklyMetrics(_weekStart);
+    final nativeData = await NativeHealthService().getWeeklyNativeMetrics(_weekStart);
+    if (mounted) {
+      setState(() {
+        _weekHealth = health;
+        _weekNative = nativeData;
+        _healthLoading = false;
+      });
+    }
+  }
+
   void _changeWeek(int delta) {
     setState(() => _weekOffset += delta);
     _loadWeekSteps();
+    _loadWeekHealthData();
   }
 
   Future<void> _openDateJump() async {
@@ -116,6 +137,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       HapticFeedback.selectionClick();
       setState(() => _weekOffset = newOffset);
       _loadWeekSteps();
+      _loadWeekHealthData();
     }
   }
 
@@ -128,25 +150,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
       if (ts == null) continue;
       final v = fn(data?['self_report'] as Map?);
       if (v != null) out.add((date: ts, value: v));
-    }
-    out.sort((a, b) => a.date.compareTo(b.date));
-    return out;
-  }
-
-  List<_Pt> _metric(List<Map<String, dynamic>> src, String type) {
-    final out = <_Pt>[];
-    for (final e in src) {
-      final data = e['data'] as Map?;
-      final rawTs = (data?['submission'] as Map?)?['timestamp_utc'] as String?;
-      final ts = rawTs != null ? DateTime.tryParse(rawTs)?.toLocal() : null;
-      if (ts == null) continue;
-      for (final m in (data?['health_metrics'] as List?) ?? []) {
-        if ((m as Map)['type'] == type) {
-          final v = (m['value'] as num?)?.toDouble();
-          if (v != null) out.add((date: ts, value: v));
-          break;
-        }
-      }
     }
     out.sort((a, b) => a.date.compareTo(b.date));
     return out;
@@ -258,7 +261,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final tt = Theme.of(context).textTheme;
     final l = AppLocalizations.of(context);
 
-    if (_history.isEmpty && _weekSteps.isEmpty && !_stepsLoading) {
+    if (_history.isEmpty && _weekSteps.isEmpty && _weekHealth.isEmpty && _weekNative.isEmpty && !_stepsLoading && !_healthLoading) {
       return Scaffold(
         appBar: AppBar(
           title: AppBarTitle(l.historyTitle),
@@ -304,13 +307,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
       final hm = h / 100.0;
       return w / (hm * hm);
     });
-    final hr        = _metric(filtered, 'heart_rate');
-    final restHr    = _metric(filtered, 'resting_heart_rate');
-    final sleepH    = _metric(filtered, 'sleep_duration');
-    final dist      = _metric(filtered, 'distance_walking_running');
-    final flights   = _metric(filtered, 'flights_climbed');
-    final speed     = _metric(filtered, 'walking_speed');
-    final energy    = _metric(filtered, 'active_energy_burned');
+    final hr         = (_weekHealth['hr']      as List<_Pt>?) ?? <_Pt>[];
+    final restHr     = (_weekHealth['restHr']  as List<_Pt>?) ?? <_Pt>[];
+    final sleepH     = (_weekHealth['sleep']   as List<_Pt>?) ?? <_Pt>[];
+    final dist       = (_weekHealth['dist']    as List<_Pt>?) ?? <_Pt>[];
+    final flights    = (_weekHealth['flights'] as List<_Pt>?) ?? <_Pt>[];
+    final energy     = (_weekHealth['energy']  as List<_Pt>?) ?? <_Pt>[];
+    final speedRange = (_weekHealth['speed']   as List<_RangePt>?) ?? <_RangePt>[];
 
     const c1 = Color(0xFF5C6BC0);
     const cNeuro = Color(0xFFEF6C00);
@@ -323,15 +326,34 @@ class _HistoryScreenState extends State<HistoryScreen> {
     const cDist = Color(0xFF43A047);
     const cFlights = Color(0xFF1E88E5);
     const cSteps = Color(0xFF00897B);
+    const cStepLen = Color(0xFF00897B);
+    const cAsym = Color(0xFFAB47BC);
+    const cDblSupport = Color(0xFF3949AB);
+    const cSteadiness = Color(0xFF26A69A);
+    const cHeadphone = Color(0xFFFF7043);
+
+    // ── Native health metrics (from Apple Health directly, with min/max range)
+    final stepLenRange   = (_weekNative['stepLen'] ?? <_RangePt>[])
+        .map((p) => (date: p.date, avg: p.avg * 100, min: p.min * 100, max: p.max * 100))
+        .toList();
+    final asymmetry      = (_weekNative['asymmetry'] ?? <_RangePt>[])
+        .map((p) => (date: p.date, value: p.avg)).toList();
+    final dblSupportRange = _weekNative['dblSupport'] ?? <_RangePt>[];
+    final steadiness     = (_weekNative['steadiness'] ?? <_RangePt>[])
+        .map((p) => (date: p.date, value: p.avg)).toList();
+    final headphoneRange  = _weekNative['headphone'] ?? <_RangePt>[];
 
     final hasChartData = wellbeing.isNotEmpty || sleepQ.isNotEmpty ||
         neuro.isNotEmpty || musculo.isNotEmpty ||
-        _weekSteps.isNotEmpty || _stepsLoading ||
+        _weekSteps.isNotEmpty || _stepsLoading || _healthLoading ||
         hr.isNotEmpty || restHr.isNotEmpty ||
         sleepH.isNotEmpty || energy.isNotEmpty ||
-        speed.isNotEmpty || dist.isNotEmpty ||
+        speedRange.isNotEmpty || dist.isNotEmpty ||
         weight.isNotEmpty || bmi.isNotEmpty ||
         flights.isNotEmpty || _hasMenstrual(filtered) ||
+        stepLenRange.isNotEmpty || asymmetry.isNotEmpty ||
+        dblSupportRange.isNotEmpty || steadiness.isNotEmpty ||
+        headphoneRange.isNotEmpty ||
         filtered.isNotEmpty;
 
     return Scaffold(
@@ -369,6 +391,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 icon: Icons.self_improvement_rounded,
                 title: l.wellbeingRating,
                 color: cs.primary,
+                info: l.infoWellbeing,
                 child: _MultiLineChart(
                   series: [_Series(data: wellbeing, color: cs.primary)],
                   minY: 0, maxY: 5, yInterval: 1, unit: '/5',
@@ -385,6 +408,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 icon: Icons.bedtime_rounded,
                 title: l.sleepQuality,
                 color: c1,
+                info: l.infoSleepQuality,
                 child: _MultiLineChart(
                   series: [_Series(data: sleepQ, color: c1)],
                   minY: 0, maxY: 5, yInterval: 1, unit: '/5',
@@ -401,6 +425,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 icon: Icons.electric_bolt_rounded,
                 title: l.chartPainLevels,
                 color: cNeuro,
+                info: l.infoPainLevels,
                 legend: [
                   if (neuro.isNotEmpty) _LegendDot(color: cNeuro, label: l.legendNeuropathic),
                   if (musculo.isNotEmpty) _LegendDot(color: cMusculo, label: l.legendMusculoskeletal, dashed: true),
@@ -429,19 +454,28 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 icon: Icons.directions_walk_rounded,
                 title: l.stepActivity,
                 color: cSteps,
+                info: l.infoStepActivity,
                 child: _StepBarChart(data: _weekSteps, color: cSteps),
               ),
             ),
             const SizedBox(height: 12),
           ],
 
-          if (hr.isNotEmpty || restHr.isNotEmpty) ...[
+          if (_healthLoading) ...[
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 20),
+              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+            ),
+          ],
+
+          if (!_healthLoading && (hr.isNotEmpty || restHr.isNotEmpty)) ...[
             FadeSlideIn(
               delay: const Duration(milliseconds: 80),
               child: _ChartCard(
                 icon: Icons.favorite_rounded,
                 title: l.labelHeartRate,
                 color: cHr,
+                info: l.infoHeartRate,
                 legend: [
                   if (hr.isNotEmpty) _LegendDot(color: cHr, label: l.legendActive),
                   if (restHr.isNotEmpty) _LegendDot(color: cRestHr, label: l.legendResting, dashed: true),
@@ -458,55 +492,56 @@ class _HistoryScreenState extends State<HistoryScreen> {
             const SizedBox(height: 12),
           ],
 
-          if (sleepH.isNotEmpty) ...[
+          if (!_healthLoading && sleepH.isNotEmpty) ...[
             FadeSlideIn(
               delay: const Duration(milliseconds: 100),
               child: _ChartCard(
                 icon: Icons.nights_stay_rounded,
                 title: l.labelSleep,
                 color: cSleep,
+                info: l.infoSleep,
                 child: _SingleBarChart(data: sleepH, color: cSleep, unit: 'h', maxY: 10),
               ),
             ),
             const SizedBox(height: 12),
           ],
 
-          if (energy.isNotEmpty) ...[
+          if (!_healthLoading && energy.isNotEmpty) ...[
             FadeSlideIn(
               delay: const Duration(milliseconds: 110),
               child: _ChartCard(
                 icon: Icons.local_fire_department_rounded,
                 title: l.labelActiveEnergy,
                 color: cEnergy,
+                info: l.infoActiveEnergy,
                 child: _SingleBarChart(data: energy, color: cEnergy, unit: 'kcal'),
               ),
             ),
             const SizedBox(height: 12),
           ],
 
-          if (speed.isNotEmpty) ...[
+          if (!_healthLoading && speedRange.isNotEmpty) ...[
             FadeSlideIn(
               delay: const Duration(milliseconds: 120),
               child: _ChartCard(
                 icon: Icons.speed_rounded,
                 title: l.labelWalkingSpeed,
                 color: cSpeed,
-                child: _MultiLineChart(
-                  series: [_Series(data: speed, color: cSpeed)],
-                  unit: ' km/h',
-                ),
+                info: l.infoWalkingSpeed,
+                child: _RangeLineChart(data: speedRange, color: cSpeed, unit: ' km/h'),
               ),
             ),
             const SizedBox(height: 12),
           ],
 
-          if (dist.isNotEmpty) ...[
+          if (!_healthLoading && dist.isNotEmpty) ...[
             FadeSlideIn(
               delay: const Duration(milliseconds: 130),
               child: _ChartCard(
                 icon: Icons.route_rounded,
                 title: l.labelDistance,
                 color: cDist,
+                info: l.infoDistance,
                 child: _MultiLineChart(
                   series: [_Series(data: dist, color: cDist)],
                   unit: ' km',
@@ -523,6 +558,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 icon: Icons.monitor_weight_outlined,
                 title: l.labelWeight,
                 color: const Color(0xFF6D4C41),
+                info: l.infoWeight,
                 child: _SingleLineChart(
                   data: weight,
                   color: const Color(0xFF6D4C41),
@@ -540,20 +576,101 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 icon: Icons.calculate_outlined,
                 title: l.bmiTitle,
                 color: const Color(0xFF43A047),
+                info: l.infoBmi,
                 child: _BmiBarChart(data: bmi, l: l),
               ),
             ),
             const SizedBox(height: 12),
           ],
 
-          if (flights.isNotEmpty) ...[
+          if (!_healthLoading && flights.isNotEmpty) ...[
             FadeSlideIn(
               delay: const Duration(milliseconds: 140),
               child: _ChartCard(
                 icon: Icons.stairs_rounded,
                 title: l.labelFlightsClimbed,
                 color: cFlights,
+                info: l.infoFlights,
                 child: _SingleBarChart(data: flights, color: cFlights, unit: 'fl'),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+
+          if (!_healthLoading && stepLenRange.isNotEmpty) ...[
+            FadeSlideIn(
+              delay: const Duration(milliseconds: 143),
+              child: _ChartCard(
+                icon: Icons.straighten_rounded,
+                title: l.chartStepLength,
+                color: cStepLen,
+                info: l.infoStepLength,
+                child: _RangeLineChart(data: stepLenRange, color: cStepLen, unit: ' cm'),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+
+          if (!_healthLoading && asymmetry.isNotEmpty) ...[
+            FadeSlideIn(
+              delay: const Duration(milliseconds: 146),
+              child: _ChartCard(
+                icon: Icons.swap_horiz_rounded,
+                title: l.legendAsymmetry,
+                color: cAsym,
+                info: l.infoAsymmetry,
+                child: _MultiLineChart(
+                  series: [_Series(data: asymmetry, color: cAsym)],
+                  minY: 0, maxY: 100, yInterval: 25, unit: '%',
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+
+          if (!_healthLoading && dblSupportRange.isNotEmpty) ...[
+            FadeSlideIn(
+              delay: const Duration(milliseconds: 147),
+              child: _ChartCard(
+                icon: Icons.directions_walk_rounded,
+                title: l.legendDoubleSupport,
+                color: cDblSupport,
+                info: l.infoDblSupport,
+                child: _RangeLineChart(
+                  data: dblSupportRange, color: cDblSupport,
+                  unit: '%', minY: 0, maxY: 100, yInterval: 25,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+
+          if (!_healthLoading && steadiness.isNotEmpty) ...[
+            FadeSlideIn(
+              delay: const Duration(milliseconds: 148),
+              child: _ChartCard(
+                icon: Icons.balance_rounded,
+                title: l.legendSteadiness,
+                color: cSteadiness,
+                info: l.infoSteadiness,
+                child: _MultiLineChart(
+                  series: [_Series(data: steadiness, color: cSteadiness)],
+                  minY: 0, maxY: 100, yInterval: 25, unit: '%',
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+
+          if (!_healthLoading && headphoneRange.isNotEmpty) ...[
+            FadeSlideIn(
+              delay: const Duration(milliseconds: 149),
+              child: _ChartCard(
+                icon: Icons.headphones_rounded,
+                title: l.chartHeadphoneAudio,
+                color: cHeadphone,
+                info: l.infoHeadphoneAudio,
+                child: _RangeLineChart(data: headphoneRange, color: cHeadphone, unit: ' dB'),
               ),
             ),
             const SizedBox(height: 12),
@@ -566,6 +683,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 icon: Icons.water_drop_rounded,
                 title: l.menstrualActivity,
                 color: const Color(0xFFB71C1C),
+                info: l.infoMenstrual,
                 child: _MenstrualStrip(days: _getMenstrualDays(filtered), weekEnd: _weekEnd),
               ),
             ),
@@ -600,6 +718,7 @@ class _ChartCard extends StatelessWidget {
   final Color color;
   final Widget child;
   final List<Widget> legend;
+  final String? info;
 
   const _ChartCard({
     required this.icon,
@@ -607,7 +726,44 @@ class _ChartCard extends StatelessWidget {
     required this.color,
     required this.child,
     this.legend = const [],
+    this.info,
   });
+
+  void _showInfo(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+        contentPadding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+        title: Row(children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 14, color: color),
+          ),
+          const SizedBox(width: 10),
+          Expanded(child: Text(title,
+              style: tt.titleSmall?.copyWith(fontWeight: FontWeight.bold))),
+        ]),
+        content: Text(info!, style: tt.bodySmall?.copyWith(
+          color: cs.onSurfaceVariant,
+          height: 1.5,
+        )),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -637,6 +793,15 @@ class _ChartCard extends StatelessWidget {
                   child: Text(title,
                       style: tt.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
                 ),
+                if (info != null)
+                  GestureDetector(
+                    onTap: () => _showInfo(context),
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 4),
+                      child: Icon(Icons.info_outline_rounded,
+                          size: 18, color: cs.onSurfaceVariant.withValues(alpha: 0.6)),
+                    ),
+                  ),
               ],
             ),
             if (legend.isNotEmpty) ...[
@@ -1026,6 +1191,164 @@ class _SingleLineChart extends StatelessWidget {
         series: [_Series(data: data, color: color)],
         unit: unit,
       );
+}
+
+class _RangeLineChart extends StatelessWidget {
+  final List<_RangePt> data;
+  final Color color;
+  final String? unit;
+  final double? minY;
+  final double? maxY;
+  final double? yInterval;
+
+  const _RangeLineChart({
+    required this.data,
+    required this.color,
+    this.unit,
+    this.minY,
+    this.maxY,
+    this.yInterval,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+
+    if (data.isEmpty) return const SizedBox(height: 160);
+
+    double actualMin = minY ?? data.map((p) => p.min).reduce(math.min);
+    double actualMax = maxY ?? data.map((p) => p.max).reduce(math.max);
+    if (actualMin == actualMax) { actualMin -= 1; actualMax += 1; }
+    final vRange = actualMax - actualMin;
+    if (minY == null) actualMin = math.max(0, actualMin - vRange * 0.15);
+    if (maxY == null) actualMax = actualMax + vRange * 0.15;
+
+    final count = data.length;
+    final showEvery = count <= 4 ? 1 : count <= 8 ? 2 : 3;
+
+    // Bar order: 0=avg (visible), 1=max (invisible), 2=min (invisible)
+    // BetweenBarsData(fromIndex:1, toIndex:2) shades the min–max band.
+    final bars = [
+      LineChartBarData(
+        spots: data.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.avg)).toList(),
+        color: color,
+        barWidth: 2.5,
+        isCurved: true,
+        curveSmoothness: 0.3,
+        preventCurveOverShooting: true,
+        dotData: FlDotData(
+          show: true,
+          getDotPainter: (spot, pct, barData, idx) => FlDotCirclePainter(
+            radius: 4, color: color, strokeWidth: 1.5, strokeColor: Colors.white,
+          ),
+        ),
+        belowBarData: BarAreaData(show: false),
+      ),
+      LineChartBarData(
+        spots: data.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.max)).toList(),
+        color: Colors.transparent,
+        barWidth: 0,
+        isCurved: true,
+        curveSmoothness: 0.3,
+        preventCurveOverShooting: true,
+        dotData: const FlDotData(show: false),
+        belowBarData: BarAreaData(show: false),
+      ),
+      LineChartBarData(
+        spots: data.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.min)).toList(),
+        color: Colors.transparent,
+        barWidth: 0,
+        isCurved: true,
+        curveSmoothness: 0.3,
+        preventCurveOverShooting: true,
+        dotData: const FlDotData(show: false),
+        belowBarData: BarAreaData(show: false),
+      ),
+    ];
+
+    return SizedBox(
+      height: 180,
+      child: LineChart(
+        LineChartData(
+          minX: -0.5,
+          maxX: (count - 1).toDouble() + 0.5,
+          minY: actualMin,
+          maxY: actualMax,
+          lineBarsData: bars,
+          betweenBarsData: [
+            BetweenBarsData(
+              fromIndex: 1,
+              toIndex: 2,
+              color: color.withValues(alpha: 0.18),
+            ),
+          ],
+          clipData: const FlClipData.all(),
+          titlesData: FlTitlesData(
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 26,
+                interval: 1.0,
+                getTitlesWidget: (v, _) {
+                  final idx = v.round();
+                  if (idx < 0 || idx >= data.length) return const SizedBox();
+                  if (idx % showEvery != 0) return const SizedBox();
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(DateFormat('d/M').format(data[idx].date),
+                        style: tt.labelSmall?.copyWith(fontSize: 9)),
+                  );
+                },
+              ),
+            ),
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 34,
+                interval: yInterval ?? ((actualMax - actualMin) / 4),
+                getTitlesWidget: (v, meta) {
+                  if (v <= actualMin || v >= actualMax) return const SizedBox();
+                  return Text(
+                    v == v.roundToDouble() ? v.round().toString() : v.toStringAsFixed(1),
+                    style: tt.labelSmall?.copyWith(fontSize: 9, color: cs.onSurfaceVariant),
+                  );
+                },
+              ),
+            ),
+            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          ),
+          gridData: FlGridData(
+            show: true,
+            drawVerticalLine: false,
+            horizontalInterval: yInterval ?? ((actualMax - actualMin) / 4),
+            getDrawingHorizontalLine: (_) => FlLine(
+              color: cs.outlineVariant.withValues(alpha: 0.35),
+              strokeWidth: 1,
+            ),
+          ),
+          borderData: FlBorderData(show: false),
+          lineTouchData: LineTouchData(
+            touchTooltipData: LineTouchTooltipData(
+              getTooltipColor: (_) => cs.inverseSurface,
+              getTooltipItems: (touchedSpots) => touchedSpots.map((s) {
+                if (s.barIndex != 0) return LineTooltipItem('', const TextStyle());
+                final idx = s.spotIndex;
+                if (idx >= data.length) return LineTooltipItem('', const TextStyle());
+                final pt = data[idx];
+                String fmt(double v) => v == v.roundToDouble() ? v.round().toString() : v.toStringAsFixed(1);
+                return LineTooltipItem(
+                  '${fmt(pt.avg)}${unit ?? ''} (${fmt(pt.min)}–${fmt(pt.max)})\n${DateFormat('d MMM').format(pt.date)}',
+                  TextStyle(color: cs.onInverseSurface, fontSize: 11, fontWeight: FontWeight.w600),
+                );
+              }).toList(),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _BmiBarChart extends StatelessWidget {
@@ -1465,6 +1788,21 @@ class _SubmissionCardState extends State<_SubmissionCard> {
                     _DetailRow(Icons.route_rounded, l.labelDistance, '${(metricMap['distance_walking_running']! as double).toStringAsFixed(2)} km'),
                   if (metricMap['flights_climbed'] != null)
                     _DetailRow(Icons.stairs_rounded, l.labelFlightsClimbed, '${metricMap['flights_climbed']}'),
+                  if (metricMap['walking_step_length'] != null)
+                    _DetailRow(Icons.straighten_rounded, l.labelStepLength,
+                        '${((metricMap['walking_step_length']! as double) * 100).toStringAsFixed(1)} cm'),
+                  if (metricMap['walking_asymmetry'] != null)
+                    _DetailRow(Icons.swap_horiz_rounded, l.labelWalkingAsymmetry,
+                        '${(metricMap['walking_asymmetry']! as double).toStringAsFixed(1)} %'),
+                  if (metricMap['walking_double_support'] != null)
+                    _DetailRow(Icons.directions_walk_rounded, l.labelDoubleSupport,
+                        '${(metricMap['walking_double_support']! as double).toStringAsFixed(1)} %'),
+                  if (metricMap['walking_steadiness'] != null)
+                    _DetailRow(Icons.balance_rounded, l.labelWalkingSteadiness,
+                        '${(metricMap['walking_steadiness']! as double).toStringAsFixed(1)} %'),
+                  if (metricMap['headphone_audio_exposure'] != null)
+                    _DetailRow(Icons.headphones_rounded, l.labelHeadphoneAudio,
+                        '${(metricMap['headphone_audio_exposure']! as double).toStringAsFixed(1)} dB'),
 
                   if (menstrual != null) ...[
                     const SizedBox(height: 4),

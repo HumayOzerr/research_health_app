@@ -1,5 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../l10n/app_localizations.dart';
+import '../services/profile_photo_service.dart';
 import '../services/supabase_service.dart';
 import '../widgets/app_bar_title.dart';
 import '../widgets/fade_slide_in.dart';
@@ -21,6 +24,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
 
   String? _ageRange;
   String? _gender;
+  File? _photo;
   bool _loading = true;
   bool _saving = false;
 
@@ -52,20 +56,104 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
 
   Future<void> _loadProfile() async {
     try {
-      final profile = await SupabaseService().getProfile();
-      if (mounted && profile != null) {
+      final results = await Future.wait([
+        SupabaseService().getProfile(),
+        ProfilePhotoService.load(),
+      ]);
+      if (mounted) {
+        final profile = results[0] as Map<String, dynamic>?;
+        final photo = results[1] as File?;
         setState(() {
-          _firstNameCtrl.text = profile['first_name'] ?? '';
-          _lastNameCtrl.text = profile['last_name'] ?? '';
-          _idCtrl.text = profile['participant_id'] ?? '';
-          _ageRange = profile['age_range'] as String?;
-          _gender = profile['gender'] as String?;
-          final h = (profile['height_cm'] as num?)?.toInt();
-          if (h != null) _heightCtrl.text = '$h';
+          _photo = photo;
+          if (profile != null) {
+            _firstNameCtrl.text = profile['first_name'] ?? '';
+            _lastNameCtrl.text = profile['last_name'] ?? '';
+            _idCtrl.text = profile['participant_id'] ?? '';
+            _ageRange = profile['age_range'] as String?;
+            _gender = profile['gender'] as String?;
+            final h = (profile['height_cm'] as num?)?.toInt();
+            if (h != null) _heightCtrl.text = '$h';
+          }
         });
       }
     } finally {
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _pickPhoto() async {
+    final l = AppLocalizations.of(context);
+    final cs = Theme.of(context).colorScheme;
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40, height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: cs.outlineVariant,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: cs.primaryContainer,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(Icons.photo_library_outlined, color: cs.primary),
+                ),
+                title: Text(l.photoFromGallery),
+                onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+              ),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: cs.primaryContainer,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(Icons.camera_alt_outlined, color: cs.primary),
+                ),
+                title: Text(l.photoFromCamera),
+                onTap: () => Navigator.pop(ctx, ImageSource.camera),
+              ),
+              if (_photo != null)
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: cs.errorContainer,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(Icons.delete_outline_rounded, color: cs.error),
+                  ),
+                  title: Text(l.removePhoto, style: TextStyle(color: cs.error)),
+                  onTap: () => Navigator.pop(ctx, null),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (!mounted) return;
+    if (source == null && _photo != null) {
+      // user chose "remove"
+      await ProfilePhotoService.delete();
+      setState(() => _photo = null);
+    } else if (source != null) {
+      final file = await ProfilePhotoService.pick(source: source);
+      if (file != null && mounted) setState(() => _photo = file);
     }
   }
 
@@ -159,6 +247,8 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                         firstName: _firstNameCtrl.text.trim(),
                         lastName: _lastNameCtrl.text.trim(),
                         participantId: _idCtrl.text.trim(),
+                        photo: _photo,
+                        onTap: _pickPhoto,
                         cs: cs,
                         tt: tt,
                       ),
@@ -423,6 +513,8 @@ class _AvatarHeader extends StatelessWidget {
   final String firstName;
   final String lastName;
   final String participantId;
+  final File? photo;
+  final VoidCallback onTap;
   final ColorScheme cs;
   final TextTheme tt;
 
@@ -431,6 +523,8 @@ class _AvatarHeader extends StatelessWidget {
     required this.firstName,
     required this.lastName,
     required this.participantId,
+    required this.photo,
+    required this.onTap,
     required this.cs,
     required this.tt,
   });
@@ -442,32 +536,62 @@ class _AvatarHeader extends StatelessWidget {
       child: Column(
         children: [
           const SizedBox(height: 12),
-          Container(
-            width: 90,
-            height: 90,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: [cs.primary, cs.tertiary],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: cs.primary.withValues(alpha: 0.35),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
+          GestureDetector(
+            onTap: onTap,
+            child: Stack(
+              alignment: Alignment.bottomRight,
+              children: [
+                Container(
+                  width: 90,
+                  height: 90,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: photo == null
+                        ? LinearGradient(
+                            colors: [cs.primary, cs.tertiary],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          )
+                        : null,
+                    boxShadow: [
+                      BoxShadow(
+                        color: cs.primary.withValues(alpha: 0.35),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: photo != null
+                      ? ClipOval(
+                          child: Image.file(
+                            photo!,
+                            width: 90,
+                            height: 90,
+                            fit: BoxFit.cover,
+                          ),
+                        )
+                      : Center(
+                          child: Text(
+                            initials,
+                            style: tt.headlineSmall?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                ),
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: cs.primary,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: cs.surface, width: 2),
+                  ),
+                  child: Icon(Icons.camera_alt_rounded,
+                      size: 14, color: cs.onPrimary),
                 ),
               ],
-            ),
-            child: Center(
-              child: Text(
-                initials,
-                style: tt.headlineSmall?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
             ),
           ),
           const SizedBox(height: 14),
@@ -479,8 +603,7 @@ class _AvatarHeader extends StatelessWidget {
           if (participantId.isNotEmpty) ...[
             const SizedBox(height: 4),
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
                 color: cs.primaryContainer.withValues(alpha: 0.6),
                 borderRadius: BorderRadius.circular(20),
