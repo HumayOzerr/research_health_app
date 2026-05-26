@@ -45,15 +45,18 @@ class _LoginScreenState extends State<LoginScreen> {
         participantId: _idCtrl.text.trim().toUpperCase(),
         password: _passwordCtrl.text,
       );
-      bool consentGiven = false;
-      try {
-        final profile = await SupabaseService().getProfile();
-        consentGiven = (profile?['consent_given'] as bool?) ?? false;
-        final userId = SupabaseService().currentUser?.id;
-        if (consentGiven && userId != null) {
-          await SettingsService.saveConsent(userId);
-        }
-      } catch (_) {}
+      final userId = SupabaseService().currentUser?.id;
+      bool consentGiven =
+          userId != null && await SettingsService.checkConsent(userId);
+      if (!consentGiven) {
+        try {
+          final profile = await SupabaseService().getProfile();
+          consentGiven = (profile?['consent_given'] as bool?) ?? false;
+          if (consentGiven && userId != null) {
+            await SettingsService.saveConsent(userId);
+          }
+        } catch (_) {}
+      }
       if (!mounted) return;
       Navigator.pushReplacement(
         context,

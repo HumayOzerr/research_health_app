@@ -126,8 +126,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
       await ProfilePhotoService.delete();
       setState(() => _photo = null);
     } else if (source != null) {
-      final file = await ProfilePhotoService.pick(source: source);
-      if (file != null && mounted) setState(() => _photo = file);
+      try {
+        final file = await ProfilePhotoService.pick(source: source);
+        if (file != null && mounted) setState(() => _photo = file);
+      } on PhotoPermissionDeniedException {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(AppLocalizations.of(context).photoPermissionDenied),
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
     }
   }
 
@@ -428,6 +436,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             hasLower: _hasLower,
                             hasDigit: _hasDigit,
                             hasSpecial: _hasSpecial,
+                            l: l,
                           ),
                           const SizedBox(height: 14),
                           SoftField(
@@ -689,6 +698,7 @@ class _PasswordChecklist extends StatelessWidget {
   final bool hasLower;
   final bool hasDigit;
   final bool hasSpecial;
+  final AppLocalizations l;
 
   const _PasswordChecklist({
     required this.hasLength,
@@ -696,19 +706,18 @@ class _PasswordChecklist extends StatelessWidget {
     required this.hasLower,
     required this.hasDigit,
     required this.hasSpecial,
+    required this.l,
   });
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        _Item(met: hasLength, label: 'At least 8 characters'),
-        _Item(met: hasUpper, label: 'At least one uppercase letter (A–Z)'),
-        _Item(met: hasLower, label: 'At least one lowercase letter (a–z)'),
-        _Item(met: hasDigit, label: 'At least one number (0–9)'),
-        _Item(
-            met: hasSpecial,
-            label: 'At least one special character (!@#\$...)'),
+        _Item(met: hasLength, label: l.passwordRuleLength),
+        _Item(met: hasUpper, label: l.passwordRuleUppercase),
+        _Item(met: hasLower, label: l.passwordRuleLowercase),
+        _Item(met: hasDigit, label: l.passwordRuleDigit),
+        _Item(met: hasSpecial, label: l.passwordRuleSpecial),
       ],
     );
   }

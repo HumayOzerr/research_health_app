@@ -409,65 +409,57 @@ class _LanguageCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    return Container(
-      decoration: BoxDecoration(
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Material(
         color: cs.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: List.generate(_languages.length, (i) {
-          final lang = _languages[i];
-          final isSelected = lang.code.isEmpty
-              ? settings.locale == null
-              : settings.locale?.languageCode == lang.code;
-          final displayName =
-              lang.code.isEmpty ? l.languageSystem : lang.name;
+        child: Column(
+          children: List.generate(_languages.length, (i) {
+            final lang = _languages[i];
+            final isSelected = lang.code.isEmpty
+                ? settings.locale == null
+                : settings.locale?.languageCode == lang.code;
+            final displayName =
+                lang.code.isEmpty ? l.languageSystem : lang.name;
 
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (i > 0)
-                Divider(
-                    height: 1,
-                    indent: 16,
-                    endIndent: 16,
-                    color: cs.outlineVariant.withValues(alpha: 0.5)),
-              ListTile(
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.vertical(
-                    top: i == 0 ? const Radius.circular(16) : Radius.zero,
-                    bottom: i == _languages.length - 1
-                        ? const Radius.circular(16)
-                        : Radius.zero,
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (i > 0)
+                  Divider(
+                      height: 1,
+                      indent: 16,
+                      endIndent: 16,
+                      color: cs.outlineVariant.withValues(alpha: 0.5)),
+                ListTile(
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                  leading:
+                      Text(lang.flag, style: const TextStyle(fontSize: 22)),
+                  title: Text(
+                    displayName,
+                    style: tt.bodyMedium?.copyWith(
+                      fontWeight:
+                          isSelected ? FontWeight.w600 : FontWeight.w400,
+                    ),
                   ),
+                  trailing: isSelected
+                      ? Container(
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                              color: cs.primary, shape: BoxShape.circle),
+                          child: Icon(Icons.check_rounded,
+                              size: 14, color: cs.onPrimary),
+                        )
+                      : null,
+                  onTap: () => settings.setLocale(
+                      lang.code.isEmpty ? null : Locale(lang.code)),
                 ),
-                leading:
-                    Text(lang.flag, style: const TextStyle(fontSize: 22)),
-                title: Text(
-                  displayName,
-                  style: tt.bodyMedium?.copyWith(
-                    fontWeight:
-                        isSelected ? FontWeight.w600 : FontWeight.w400,
-                  ),
-                ),
-                trailing: isSelected
-                    ? Container(
-                        width: 24,
-                        height: 24,
-                        decoration: BoxDecoration(
-                            color: cs.primary, shape: BoxShape.circle),
-                        child: Icon(Icons.check_rounded,
-                            size: 14, color: cs.onPrimary),
-                      )
-                    : null,
-                onTap: () => settings.setLocale(
-                    lang.code.isEmpty ? null : Locale(lang.code)),
-              ),
-            ],
-          );
-        }),
+              ],
+            );
+          }),
+        ),
       ),
     );
   }

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -16,9 +17,9 @@ class ProfilePhotoService {
     return await file.exists() ? file : null;
   }
 
-  /// Opens the image picker with [source], copies the result to the app
-  /// documents directory, and returns the saved [File]. Returns null if the
-  /// user cancelled or an error occurred.
+  /// Opens the image picker. Returns the saved [File] on success,
+  /// null if cancelled, or throws [PhotoPermissionDeniedException] if
+  /// the user has denied camera/photo library access.
   static Future<File?> pick({required ImageSource source}) async {
     try {
       final picked = await ImagePicker().pickImage(
@@ -31,8 +32,13 @@ class ProfilePhotoService {
       final dest = File(await _photoPath());
       await File(picked.path).copy(dest.path);
       return dest;
-    } catch (_) {
-      return null;
+    } on PlatformException catch (e) {
+      if (e.code == 'photo_access_denied' ||
+          e.code == 'camera_access_denied' ||
+          e.code == 'PHPhotosErrorDomain') {
+        throw PhotoPermissionDeniedException();
+      }
+      rethrow;
     }
   }
 
@@ -42,3 +48,5 @@ class ProfilePhotoService {
     if (await file.exists()) await file.delete();
   }
 }
+
+class PhotoPermissionDeniedException implements Exception {}

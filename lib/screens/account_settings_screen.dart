@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../l10n/app_localizations.dart';
 import '../services/profile_photo_service.dart';
 import '../services/supabase_service.dart';
@@ -148,13 +149,32 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
 
     if (!mounted) return;
     if (source == null && _photo != null) {
-      // user chose "remove"
       await ProfilePhotoService.delete();
       setState(() => _photo = null);
     } else if (source != null) {
-      final file = await ProfilePhotoService.pick(source: source);
-      if (file != null && mounted) setState(() => _photo = file);
+      try {
+        final file = await ProfilePhotoService.pick(source: source);
+        if (file != null && mounted) setState(() => _photo = file);
+      } on PhotoPermissionDeniedException {
+        if (!mounted) return;
+        _showPermissionDenied();
+      }
     }
+  }
+
+  void _showPermissionDenied() {
+    final l = AppLocalizations.of(context);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(l.photoPermissionDenied),
+      behavior: SnackBarBehavior.floating,
+      duration: const Duration(seconds: 5),
+      action: Platform.isIOS
+          ? SnackBarAction(
+              label: l.openSettings,
+              onPressed: () => launchUrl(Uri.parse('app-settings:')),
+            )
+          : null,
+    ));
   }
 
   Future<void> _save() async {
