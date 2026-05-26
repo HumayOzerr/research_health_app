@@ -31,6 +31,7 @@ class ReviewScreen extends StatefulWidget {
   final String comment;
   final double? weightKg;
   final double? bmi;
+  final double? bloodGlucoseMgdl;
 
   const ReviewScreen({
     super.key,
@@ -51,6 +52,7 @@ class ReviewScreen extends StatefulWidget {
     required this.comment,
     this.weightKg,
     this.bmi,
+    this.bloodGlucoseMgdl,
   });
 
   @override
@@ -158,6 +160,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
       comment: widget.comment,
       weightKg: widget.weightKg,
       bmi: widget.bmi,
+      bloodGlucoseMgdl: widget.bloodGlucoseMgdl,
       stepCount: _steps,
       heartRateBpm: _heartRate,
       sleepHours: _sleepHours,
@@ -310,6 +313,13 @@ class _ReviewScreenState extends State<ReviewScreen> {
                     label: l.bmiTitle,
                     value: widget.bmi!.toStringAsFixed(1),
                     iconColor: const Color(0xFF43A047),
+                  ),
+                if (widget.bloodGlucoseMgdl != null)
+                  _MetricRow(
+                    icon: Icons.bloodtype_rounded,
+                    label: l.labelBloodGlucose,
+                    value: '${widget.bloodGlucoseMgdl!.toStringAsFixed(1)} mg/dL',
+                    iconColor: const Color(0xFFD81B60),
                   ),
                 if (widget.comment.isNotEmpty)
                   _CommentRow(comment: widget.comment),

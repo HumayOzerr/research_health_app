@@ -27,6 +27,7 @@ class _FormScreenState extends State<FormScreen> {
   final _commentController = TextEditingController();
   final _weightController = TextEditingController();
   final _heightController = TextEditingController();
+  final _glucoseController = TextEditingController();
 
   String? _ageRange;
   bool _ageFromProfile = false;
@@ -43,6 +44,12 @@ class _FormScreenState extends State<FormScreen> {
   String _participantId = '';
   bool _profileLoading = true;
   int? _heightCm;
+
+  double? get _bloodGlucose {
+    final v = double.tryParse(_glucoseController.text.replaceAll(',', '.'));
+    if (v == null || v < 40 || v > 600) return null;
+    return v;
+  }
 
   double? get _weightKg {
     final v = double.tryParse(_weightController.text.replaceAll(',', '.'));
@@ -103,6 +110,7 @@ class _FormScreenState extends State<FormScreen> {
     _commentController.dispose();
     _weightController.dispose();
     _heightController.dispose();
+    _glucoseController.dispose();
     super.dispose();
   }
 
@@ -182,6 +190,7 @@ class _FormScreenState extends State<FormScreen> {
           comment: _commentController.text.trim(),
           weightKg: _weightKg,
           bmi: _bmi,
+          bloodGlucoseMgdl: _bloodGlucose,
         ),
       ),
     );
@@ -443,6 +452,50 @@ class _FormScreenState extends State<FormScreen> {
                           _BmiDisplay(bmi: _bmi!, l: l),
                         ],
                       ],
+                    ),
+                  ),
+                ),
+              ),
+
+              // ── Blood Glucose
+              const SizedBox(height: 28),
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 210),
+                child: _SectionHeader(
+                  icon: Icons.bloodtype_rounded,
+                  color: const Color(0xFFD81B60),
+                  title: l.labelBloodGlucose,
+                  subtitle: l.bloodGlucoseQuestion,
+                ),
+              ),
+              const SizedBox(height: 14),
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 220),
+                child: Card(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20)),
+                  color: cs.surfaceContainerLow,
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: TextFormField(
+                      controller: _glucoseController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: _field(
+                        label: l.labelBloodGlucose,
+                        suffix: 'mg/dL',
+                        prefix: Icons.bloodtype_rounded,
+                        hint: l.bloodGlucoseHint,
+                      ),
+                      onChanged: (_) => setState(() {}),
+                      validator: (v) {
+                        if (v == null || v.isEmpty) return null;
+                        final n = double.tryParse(v.replaceAll(',', '.'));
+                        if (n == null || n < 40 || n > 600) {
+                          return l.bloodGlucoseError;
+                        }
+                        return null;
+                      },
                     ),
                   ),
                 ),

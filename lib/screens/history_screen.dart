@@ -297,6 +297,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final sleepQ    = _survey(filtered, (sr) => ((sr?['sleep_quality'] as Map?)?['value'] as int?)?.toDouble());
     final neuro     = _survey(filtered, (sr) => (((sr?['pain'] as Map?)?['neuropathic'] as Map?)?['value'] as int?)?.toDouble());
     final musculo   = _survey(filtered, (sr) => (((sr?['pain'] as Map?)?['musculoskeletal'] as Map?)?['value'] as int?)?.toDouble());
+    final glucose   = _survey(filtered, (sr) => (sr?['blood_glucose_mgdl'] as num?)?.toDouble());
     final weight    = _survey(filtered, (sr) => (sr?['weight_kg'] as num?)?.toDouble());
     final bmi       = _survey(filtered, (sr) {
       final saved = (sr?['bmi'] as num?)?.toDouble();
@@ -315,6 +316,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final energy     = (_weekHealth['energy']  as List<_Pt>?) ?? <_Pt>[];
     final speedRange = (_weekHealth['speed']   as List<_RangePt>?) ?? <_RangePt>[];
 
+    const cGlucose = Color(0xFFD81B60);
     const c1 = Color(0xFF5C6BC0);
     const cNeuro = Color(0xFFEF6C00);
     const cMusculo = Color(0xFFE53935);
@@ -353,7 +355,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         flights.isNotEmpty || _hasMenstrual(filtered) ||
         stepLenRange.isNotEmpty || asymmetry.isNotEmpty ||
         dblSupportRange.isNotEmpty || steadiness.isNotEmpty ||
-        headphoneRange.isNotEmpty ||
+        headphoneRange.isNotEmpty || glucose.isNotEmpty ||
         filtered.isNotEmpty;
 
     return Scaffold(
@@ -578,6 +580,20 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 color: const Color(0xFF43A047),
                 info: l.infoBmi,
                 child: _BmiBarChart(data: bmi, l: l),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+
+          if (glucose.isNotEmpty) ...[
+            FadeSlideIn(
+              delay: const Duration(milliseconds: 159),
+              child: _ChartCard(
+                icon: Icons.bloodtype_rounded,
+                title: l.labelBloodGlucose,
+                color: cGlucose,
+                info: l.infoBloodGlucose,
+                child: _GlucoseLineChart(data: glucose, color: cGlucose),
               ),
             ),
             const SizedBox(height: 12),
@@ -1523,6 +1539,167 @@ class _BmiBarChart extends StatelessWidget {
   }
 }
 
+class _GlucoseLineChart extends StatelessWidget {
+  final List<_Pt> data;
+  final Color color;
+
+  const _GlucoseLineChart({required this.data, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+
+    if (data.isEmpty) return const SizedBox(height: 200);
+
+    final vals = data.map((p) => p.value);
+    final dataMin = vals.reduce(math.min);
+    final dataMax = vals.reduce(math.max);
+    final minY = math.max(40.0, dataMin - 20);
+    final maxY = math.max(dataMax + 20, 160.0);
+
+    final count = data.length;
+    final showEvery = count <= 4 ? 1 : count <= 8 ? 2 : 3;
+
+    final spots = data.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.value)).toList();
+
+    return SizedBox(
+      height: 220,
+      child: LineChart(
+        LineChartData(
+          minX: -0.5,
+          maxX: (count - 1).toDouble() + 0.5,
+          minY: minY,
+          maxY: maxY,
+          lineBarsData: [
+            LineChartBarData(
+              spots: spots,
+              color: color,
+              barWidth: 2.5,
+              isCurved: true,
+              curveSmoothness: 0.3,
+              preventCurveOverShooting: true,
+              dotData: FlDotData(
+                show: true,
+                getDotPainter: (spot, pct, data, idx) => FlDotCirclePainter(
+                  radius: 4, color: color, strokeWidth: 1.5, strokeColor: Colors.white,
+                ),
+              ),
+              belowBarData: BarAreaData(
+                show: true,
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [color.withValues(alpha: 0.18), color.withValues(alpha: 0)],
+                ),
+              ),
+            ),
+          ],
+          extraLinesData: ExtraLinesData(
+            horizontalLines: [
+              HorizontalLine(
+                y: 70,
+                color: const Color(0xFF1E88E5).withValues(alpha: 0.6),
+                strokeWidth: 1.5,
+                dashArray: [4, 4],
+                label: HorizontalLineLabel(
+                  show: true,
+                  alignment: Alignment.topRight,
+                  labelResolver: (_) => '70',
+                  style: const TextStyle(fontSize: 9, color: Color(0xFF1E88E5), fontWeight: FontWeight.w600),
+                ),
+              ),
+              HorizontalLine(
+                y: 100,
+                color: const Color(0xFF43A047).withValues(alpha: 0.6),
+                strokeWidth: 1.5,
+                dashArray: [4, 4],
+                label: HorizontalLineLabel(
+                  show: true,
+                  alignment: Alignment.topRight,
+                  labelResolver: (_) => '100',
+                  style: const TextStyle(fontSize: 9, color: Color(0xFF43A047), fontWeight: FontWeight.w600),
+                ),
+              ),
+              HorizontalLine(
+                y: 140,
+                color: const Color(0xFFF57C00).withValues(alpha: 0.6),
+                strokeWidth: 1.5,
+                dashArray: [4, 4],
+                label: HorizontalLineLabel(
+                  show: true,
+                  alignment: Alignment.topRight,
+                  labelResolver: (_) => '140',
+                  style: const TextStyle(fontSize: 9, color: Color(0xFFF57C00), fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+          titlesData: FlTitlesData(
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 26,
+                interval: 1.0,
+                getTitlesWidget: (v, _) {
+                  final idx = v.round();
+                  if (idx < 0 || idx >= data.length) return const SizedBox();
+                  if (idx % showEvery != 0) return const SizedBox();
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(DateFormat('d/M').format(data[idx].date),
+                        style: tt.labelSmall?.copyWith(fontSize: 9)),
+                  );
+                },
+              ),
+            ),
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 38,
+                interval: 30,
+                getTitlesWidget: (v, meta) {
+                  if (v <= minY || v >= maxY) return const SizedBox();
+                  return Text(
+                    v.round().toString(),
+                    style: tt.labelSmall?.copyWith(fontSize: 9, color: cs.onSurfaceVariant),
+                  );
+                },
+              ),
+            ),
+            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          ),
+          gridData: FlGridData(
+            show: true,
+            drawVerticalLine: false,
+            horizontalInterval: 30,
+            getDrawingHorizontalLine: (_) => FlLine(
+              color: cs.outlineVariant.withValues(alpha: 0.35),
+              strokeWidth: 1,
+            ),
+          ),
+          borderData: FlBorderData(show: false),
+          lineTouchData: LineTouchData(
+            touchTooltipData: LineTouchTooltipData(
+              getTooltipColor: (_) => cs.inverseSurface,
+              getTooltipItems: (spots) => spots.map((s) {
+                final idx = s.spotIndex;
+                final date = idx < data.length ? '\n${DateFormat('d MMM').format(data[idx].date)}' : '';
+                final val = s.y.toStringAsFixed(1);
+                return LineTooltipItem(
+                  '$val mg/dL$date',
+                  TextStyle(color: cs.onInverseSurface, fontSize: 11, fontWeight: FontWeight.w600),
+                );
+              }).toList(),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _MenstrualStrip extends StatelessWidget {
   final Map<String, bool?> days;
   final DateTime weekEnd;
@@ -1631,8 +1808,15 @@ class _SubmissionCardState extends State<_SubmissionCard> {
     }
 
     final rawTs = submission?['timestamp_utc'] as String?;
-    final timestamp = rawTs != null ? DateTime.tryParse(rawTs)?.toLocal() : null;
-    final dateStr = timestamp != null ? DateFormat('d MMM yyyy, HH:mm').format(timestamp) : '—';
+    final forDate = rawTs != null ? DateTime.tryParse(rawTs)?.toLocal() : null;
+    final locale = l.locale.languageCode;
+    final forDateStr = forDate != null ? DateFormat('d MMM yyyy', locale).format(forDate) : '—';
+
+    final rawCreatedAt = submission?['created_at_utc'] as String?;
+    final createdAt = rawCreatedAt != null ? DateTime.tryParse(rawCreatedAt)?.toLocal() : null;
+    final createdAtStr = createdAt != null
+        ? '${l.enteredAt}: ${DateFormat('d MMM, HH:mm', locale).format(createdAt)}'
+        : null;
 
     final isPending = status == 'pending';
     final statusColor = isPending ? cs.error : Colors.green;
@@ -1657,8 +1841,21 @@ class _SubmissionCardState extends State<_SubmissionCard> {
                   children: [
                     Row(
                       children: [
-                        Expanded(child: Text(dateStr,
-                            style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.w600))),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(forDateStr,
+                                  style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+                              if (createdAtStr != null) ...[
+                                const SizedBox(height: 2),
+                                Text(createdAtStr,
+                                    style: tt.labelSmall?.copyWith(
+                                        color: cs.onSurfaceVariant)),
+                              ],
+                            ],
+                          ),
+                        ),
                         if (onPeriod == true) ...[
                           const Icon(Icons.water_drop, color: Color(0xFFB71C1C), size: 16),
                           const SizedBox(width: 6),
@@ -1771,6 +1968,9 @@ class _SubmissionCardState extends State<_SubmissionCard> {
                     _DetailRow(Icons.monitor_weight_outlined, l.labelWeight, '${weightKg.toStringAsFixed(1)} kg'),
                   if (bmiVal != null)
                     _DetailRow(Icons.calculate_outlined, l.labelBmi, '${bmiVal.toStringAsFixed(1)} kg/m²'),
+                  if ((selfReport?['blood_glucose_mgdl'] as num?) != null)
+                    _DetailRow(Icons.bloodtype_rounded, l.labelBloodGlucose,
+                        '${((selfReport!['blood_glucose_mgdl'] as num).toDouble()).toStringAsFixed(1)} mg/dL'),
 
                   if (metricMap['step_count'] != null)
                     _DetailRow(Icons.directions_walk_rounded, l.labelStepsToday, '${metricMap['step_count']} steps'),

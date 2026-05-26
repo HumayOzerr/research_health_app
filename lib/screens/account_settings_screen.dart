@@ -149,15 +149,28 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
 
     if (!mounted) return;
     if (source == null && _photo != null) {
+      if (_photo != null) FileImage(_photo!).evict();
       await ProfilePhotoService.delete();
       setState(() => _photo = null);
     } else if (source != null) {
       try {
         final file = await ProfilePhotoService.pick(source: source);
-        if (file != null && mounted) setState(() => _photo = file);
+        if (file != null && mounted) {
+          if (_photo != null) FileImage(_photo!).evict();
+          FileImage(file).evict();
+          setState(() => _photo = file);
+        }
       } on PhotoPermissionDeniedException {
         if (!mounted) return;
         _showPermissionDenied();
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context).errorUnexpected),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
     }
   }
@@ -585,6 +598,7 @@ class _AvatarHeader extends StatelessWidget {
                       ? ClipOval(
                           child: Image.file(
                             photo!,
+                            key: ValueKey(photo!.lastModifiedSync().millisecondsSinceEpoch),
                             width: 90,
                             height: 90,
                             fit: BoxFit.cover,

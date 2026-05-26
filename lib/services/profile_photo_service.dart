@@ -30,7 +30,8 @@ class ProfilePhotoService {
       );
       if (picked == null) return null;
       final dest = File(await _photoPath());
-      await File(picked.path).copy(dest.path);
+      final bytes = await picked.readAsBytes();
+      await dest.writeAsBytes(bytes, flush: true);
       return dest;
     } on PlatformException catch (e) {
       if (e.code == 'photo_access_denied' ||

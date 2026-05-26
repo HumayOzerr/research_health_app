@@ -65,11 +65,17 @@ class _ResultScreenState extends State<ResultScreen> {
     final wellbeing = selfReport?['wellbeing_rating'] as Map<String, dynamic>?;
     final rating = wellbeing?['value'] as int?;
     final comment = selfReport?['comment'] as String?;
+    final bloodGlucose = (selfReport?['blood_glucose_mgdl'] as num?)?.toDouble();
     final metrics = data['health_metrics'] as List<dynamic>?;
     final metricCount = metrics?.length ?? 0;
 
-    return Scaffold(
-      appBar: AppBar(title: AppBarTitle(l.resultTitle)),
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+      appBar: AppBar(
+        title: AppBarTitle(l.resultTitle),
+        automaticallyImplyLeading: false,
+      ),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
@@ -173,6 +179,14 @@ class _ResultScreenState extends State<ResultScreen> {
                         icon: Icons.chat_bubble_outline_rounded,
                         label: l.labelComment,
                         value: comment,
+                      ),
+                    ],
+                    if (bloodGlucose != null) ...[
+                      const SizedBox(height: 10),
+                      _SummaryRow(
+                        icon: Icons.bloodtype_rounded,
+                        label: l.labelBloodGlucose,
+                        value: '${bloodGlucose.toStringAsFixed(1)} mg/dL',
                       ),
                     ],
                   ],
@@ -279,6 +293,7 @@ class _ResultScreenState extends State<ResultScreen> {
           ),
         ],
       ),
+    ),
     );
   }
 }
@@ -362,27 +377,67 @@ class _MetricRow extends StatelessWidget {
   const _MetricRow({required this.metric, required this.l});
 
   static const _icons = {
-    'step_count': Icons.directions_walk_rounded,
-    'heart_rate': Icons.favorite_rounded,
-    'sleep_duration': Icons.bedtime_rounded,
-    'active_energy_burned': Icons.local_fire_department_rounded,
+    'step_count':               Icons.directions_walk_rounded,
+    'heart_rate':               Icons.favorite_rounded,
+    'resting_heart_rate':       Icons.monitor_heart_outlined,
+    'sleep_duration':           Icons.bedtime_rounded,
+    'active_energy_burned':     Icons.local_fire_department_rounded,
+    'walking_speed':            Icons.speed_rounded,
+    'flights_climbed':          Icons.stairs_rounded,
+    'distance_walking_running': Icons.straighten_rounded,
+    'walking_step_length':      Icons.swap_horiz_rounded,
+    'walking_asymmetry':        Icons.compare_arrows_rounded,
+    'walking_double_support':   Icons.accessibility_new_rounded,
+    'walking_steadiness':       Icons.balance_rounded,
+    'headphone_audio_exposure': Icons.headphones_rounded,
   };
 
   String _label(String type) => switch (type) {
-        'step_count' => l.labelStepsToday,
-        'heart_rate' => l.labelHeartRate,
-        'sleep_duration' => l.labelSleep,
-        'active_energy_burned' => l.labelActiveEnergy,
-        _ => type,
+        'step_count'               => l.labelStepsToday,
+        'heart_rate'               => l.labelHeartRate,
+        'resting_heart_rate'       => l.labelRestingHeartRate,
+        'sleep_duration'           => l.labelSleep,
+        'active_energy_burned'     => l.labelActiveEnergy,
+        'walking_speed'            => l.labelWalkingSpeed,
+        'flights_climbed'          => l.labelFlightsClimbed,
+        'distance_walking_running' => l.labelDistance,
+        'walking_step_length'      => l.labelStepLength,
+        'walking_asymmetry'        => l.labelWalkingAsymmetry,
+        'walking_double_support'   => l.labelDoubleSupport,
+        'walking_steadiness'       => l.labelWalkingSteadiness,
+        'headphone_audio_exposure' => l.labelHeadphoneAudio,
+        _                          => type,
       };
 
-  String _formatted(dynamic value, String unit) {
+  String _formatted(String type, dynamic value, String unit) {
     if (value == null) return l.noData;
-    if (unit == 'count') return '$value steps';
-    if (unit == 'bpm') return '$value bpm';
-    if (unit == 'hours') return '${(value as num).toStringAsFixed(1)} h';
-    if (unit == 'kcal') return '${(value as num).round()} kcal';
-    return '$value $unit';
+    switch (type) {
+      case 'step_count':
+        return '${(value as num).round()} ${l.unitSteps}';
+      case 'flights_climbed':
+        return '${(value as num).round()} ${l.unitFloors}';
+      case 'heart_rate':
+      case 'resting_heart_rate':
+        return '${(value as num).round()} bpm';
+      case 'sleep_duration':
+        return '${(value as num).toStringAsFixed(1)} h';
+      case 'active_energy_burned':
+        return '${(value as num).round()} kcal';
+      case 'walking_speed':
+        return '${(value as num).toStringAsFixed(1)} km/h';
+      case 'distance_walking_running':
+        return '${(value as num).toStringAsFixed(2)} km';
+      case 'walking_step_length':
+        return '${((value as num) * 100).toStringAsFixed(0)} cm';
+      case 'walking_asymmetry':
+      case 'walking_double_support':
+      case 'walking_steadiness':
+        return '${(value as num).toStringAsFixed(1)} %';
+      case 'headphone_audio_exposure':
+        return '${(value as num).toStringAsFixed(1)} dB';
+      default:
+        return '$value $unit';
+    }
   }
 
   @override
@@ -404,7 +459,7 @@ class _MetricRow extends StatelessWidget {
             child: Text(_label(type),
                 style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
           ),
-          Text(_formatted(value, unit),
+          Text(_formatted(type, value, unit),
               style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.w500)),
         ],
       ),

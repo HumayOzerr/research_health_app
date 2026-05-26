@@ -31,10 +31,13 @@ class Submission {
   final double? walkingDoubleSupportPct;
   final double? walkingStabilityPct;
   final double? headphoneAudioDb;
+  final double? bloodGlucoseMgdl;
+  final DateTime createdAt;
 
   Submission({
     required this.id,
     required this.timestamp,
+    DateTime? createdAt,
     required this.participantId,
     required this.ageRange,
     this.gender,
@@ -62,7 +65,8 @@ class Submission {
     this.walkingDoubleSupportPct,
     this.walkingStabilityPct,
     this.headphoneAudioDb,
-  });
+    this.bloodGlucoseMgdl,
+  }) : createdAt = createdAt ?? DateTime.now();
 
   Map<String, dynamic> toJson() {
     final now = timestamp.toUtc();
@@ -234,6 +238,7 @@ class Submission {
       'submission': {
         'id': id,
         'timestamp_utc': now.toIso8601String(),
+        'created_at_utc': createdAt.toUtc().toIso8601String(),
         'app_version': '0.1.0',
       },
       'participant': {
@@ -271,6 +276,7 @@ class Submission {
         'comment': comment,
         if (weightKg != null) 'weight_kg': double.parse(weightKg!.toStringAsFixed(1)),
         if (bmi != null) 'bmi': double.parse(bmi!.toStringAsFixed(1)),
+        if (bloodGlucoseMgdl != null) 'blood_glucose_mgdl': double.parse(bloodGlucoseMgdl!.toStringAsFixed(1)),
         if (gender == 'female') 'menstrual_status': {
           'on_period': hasPeriod,
           if (cycleDay != null) 'cycle_day': cycleDay,

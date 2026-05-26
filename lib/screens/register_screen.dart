@@ -123,16 +123,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (!mounted) return;
     if (source == null && _photo != null) {
+      if (_photo != null) FileImage(_photo!).evict();
       await ProfilePhotoService.delete();
       setState(() => _photo = null);
     } else if (source != null) {
       try {
         final file = await ProfilePhotoService.pick(source: source);
-        if (file != null && mounted) setState(() => _photo = file);
+        if (file != null && mounted) {
+          if (_photo != null) FileImage(_photo!).evict();
+          FileImage(file).evict();
+          setState(() => _photo = file);
+        }
       } on PhotoPermissionDeniedException {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(AppLocalizations.of(context).photoPermissionDenied),
+          behavior: SnackBarBehavior.floating,
+        ));
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(AppLocalizations.of(context).errorUnexpected),
           behavior: SnackBarBehavior.floating,
         ));
       }
@@ -297,6 +308,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         ? ClipOval(
                                             child: Image.file(
                                               _photo!,
+                                              key: ValueKey(_photo!.lastModifiedSync().millisecondsSinceEpoch),
                                               width: 88,
                                               height: 88,
                                               fit: BoxFit.cover,

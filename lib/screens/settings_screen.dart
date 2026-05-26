@@ -237,7 +237,7 @@ class _ProfileCard extends StatelessWidget {
               ),
               child: photo != null
                   ? ClipOval(
-                      child: Image.file(photo!, width: 52, height: 52, fit: BoxFit.cover),
+                      child: Image.file(photo!, key: ValueKey(photo!.lastModifiedSync().millisecondsSinceEpoch), width: 52, height: 52, fit: BoxFit.cover),
                     )
                   : Center(
                       child: initials.isNotEmpty
