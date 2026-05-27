@@ -171,7 +171,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         gender: _gender!,
         ageRange: _ageRange,
         heightCm: int.tryParse(_heightCtrl.text.trim()),
-        email: _emailCtrl.text.trim().isEmpty ? null : _emailCtrl.text.trim(),
+        email: _emailCtrl.text.trim(),
       );
       final newUserId = SupabaseService().currentUser?.id;
       if (newUserId != null) {
@@ -371,12 +371,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           const SizedBox(height: 14),
                           SoftField(
                             controller: _emailCtrl,
-                            label: l.emailOptional,
+                            label: l.emailAddress,
                             icon: Icons.email_outlined,
                             keyboardType: TextInputType.emailAddress,
                             textInputAction: TextInputAction.next,
                             validator: (v) {
-                              if (v == null || v.trim().isEmpty) return null;
+                              if (v == null || v.trim().isEmpty) return l.emailInvalid;
                               final ok = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
                                   .hasMatch(v.trim());
                               return ok ? null : l.emailInvalid;
