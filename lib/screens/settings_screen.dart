@@ -44,9 +44,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _loadProfile() async {
+    final userId = SupabaseService().currentUser?.id ?? '';
     final results = await Future.wait([
       SupabaseService().getProfile(),
-      ProfilePhotoService.load(),
+      ProfilePhotoService.load(userId),
     ]);
     if (mounted) {
       setState(() {

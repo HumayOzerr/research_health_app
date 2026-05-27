@@ -49,4 +49,18 @@ class StorageService {
     final all = await getHistory();
     return all.where((e) => e['status'] == 'pending').toList();
   }
+
+  Future<bool> hasSubmissionToday() async {
+    final all = await getHistory();
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final tomorrow = today.add(const Duration(days: 1));
+    return all.any((e) {
+      final rawTs = ((e['data'] as Map?)?['submission'] as Map?)?['timestamp_utc'] as String?;
+      if (rawTs == null) return false;
+      final ts = DateTime.tryParse(rawTs)?.toLocal();
+      if (ts == null) return false;
+      return !ts.isBefore(today) && ts.isBefore(tomorrow);
+    });
+  }
 }

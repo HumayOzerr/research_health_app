@@ -25,6 +25,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _confirmCtrl = TextEditingController();
   final _idCtrl = TextEditingController();
   final _heightCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
   String? _ageRange;
   String? _gender;
   File? _photo;
@@ -53,6 +54,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _confirmCtrl.dispose();
     _idCtrl.dispose();
     _heightCtrl.dispose();
+    _emailCtrl.dispose();
     super.dispose();
   }
 
@@ -124,11 +126,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!mounted) return;
     if (source == null && _photo != null) {
       if (_photo != null) FileImage(_photo!).evict();
-      await ProfilePhotoService.delete();
+      await ProfilePhotoService.delete('temp_register');
       setState(() => _photo = null);
     } else if (source != null) {
       try {
-        final file = await ProfilePhotoService.pick(source: source);
+        final file = await ProfilePhotoService.pick(source: source, userId: 'temp_register');
         if (file != null && mounted) {
           if (_photo != null) FileImage(_photo!).evict();
           FileImage(file).evict();
@@ -169,7 +171,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
         gender: _gender!,
         ageRange: _ageRange,
         heightCm: int.tryParse(_heightCtrl.text.trim()),
+        email: _emailCtrl.text.trim().isEmpty ? null : _emailCtrl.text.trim(),
       );
+      final newUserId = SupabaseService().currentUser?.id;
+      if (newUserId != null) {
+        await ProfilePhotoService.moveToUser('temp_register', newUserId);
+      }
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
@@ -178,8 +185,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     } on AuthException catch (e) {
       final l = AppLocalizations.of(context);
       final msg = e.message.toLowerCase();
-      setState(() => _error = msg.contains('already') || msg.contains('exists')
-          ? l.errorUserExists
+      final isConflict = msg.contains('already') || msg.contains('exists');
+      final hasEmail = _emailCtrl.text.trim().isNotEmpty;
+      setState(() => _error = isConflict
+          ? (hasEmail ? l.errorEmailExists : l.errorUserExists)
           : l.errorUnexpected);
     } catch (_) {
       final l = AppLocalizations.of(context);
@@ -358,6 +367,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             validator: (v) => (v == null || v.trim().isEmpty)
                                 ? l.participantIdError
                                 : null,
+                          ),
+                          const SizedBox(height: 14),
+                          SoftField(
+                            controller: _emailCtrl,
+                            label: l.emailOptional,
+                            icon: Icons.email_outlined,
+                            keyboardType: TextInputType.emailAddress,
+                            textInputAction: TextInputAction.next,
+                            validator: (v) {
+                              if (v == null || v.trim().isEmpty) return null;
+                              final ok = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                                  .hasMatch(v.trim());
+                              return ok ? null : l.emailInvalid;
+                            },
                           ),
                           const SizedBox(height: 14),
                           SoftField(

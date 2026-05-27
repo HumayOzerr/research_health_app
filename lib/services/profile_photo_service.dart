@@ -4,20 +4,18 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 
 class ProfilePhotoService {
-  static const _fileName = 'profile_photo.jpg';
-
-  static Future<String> _photoPath() async {
+  static Future<String> _photoPath(String userId) async {
     final dir = await getApplicationDocumentsDirectory();
-    return '${dir.path}/$_fileName';
+    return '${dir.path}/profile_photo_$userId.jpg';
   }
 
-  static Future<File?> load() async {
-    final path = await _photoPath();
+  static Future<File?> load(String userId) async {
+    final path = await _photoPath(userId);
     final file = File(path);
     return await file.exists() ? file : null;
   }
 
-        static Future<File?> pick({required ImageSource source}) async {
+  static Future<File?> pick({required ImageSource source, required String userId}) async {
     try {
       final picked = await ImagePicker().pickImage(
         source: source,
@@ -26,7 +24,7 @@ class ProfilePhotoService {
         maxHeight: 800,
       );
       if (picked == null) return null;
-      final dest = File(await _photoPath());
+      final dest = File(await _photoPath(userId));
       final bytes = await picked.readAsBytes();
       await dest.writeAsBytes(bytes, flush: true);
       return dest;
@@ -40,10 +38,17 @@ class ProfilePhotoService {
     }
   }
 
-  static Future<void> delete() async {
-    final path = await _photoPath();
+  static Future<void> delete(String userId) async {
+    final path = await _photoPath(userId);
     final file = File(path);
     if (await file.exists()) await file.delete();
+  }
+
+  static Future<void> moveToUser(String fromUserId, String toUserId) async {
+    final src = File(await _photoPath(fromUserId));
+    if (!await src.exists()) return;
+    final dest = File(await _photoPath(toUserId));
+    await src.rename(dest.path);
   }
 }
 

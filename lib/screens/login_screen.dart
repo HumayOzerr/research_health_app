@@ -8,6 +8,7 @@ import '../services/supabase_service.dart';
 import '../widgets/app_page_route.dart';
 import '../widgets/language_sheet.dart';
 import 'consent_screen.dart';
+import 'forgot_password_screen.dart';
 import 'register_screen.dart';
 import 'welcome_screen.dart';
 
@@ -185,7 +186,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             controller: _idCtrl,
                             label: l.participantId,
                             icon: Icons.badge_outlined,
-                            textCapitalization: TextCapitalization.characters,
                             validator: (v) => (v == null || v.trim().isEmpty)
                                 ? l.participantIdError
                                 : null,
@@ -264,6 +264,17 @@ class _LoginScreenState extends State<LoginScreen> {
                               AppPageRoute(page: const RegisterScreen()),
                             ),
                             child: Text(l.noAccount),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.push(
+                              context,
+                              AppPageRoute(
+                                  page: const ForgotPasswordScreen()),
+                            ),
+                            child: Text(l.forgotPassword,
+                                style: TextStyle(
+                                    color: cs.onSurfaceVariant,
+                                    fontSize: 13)),
                           ),
                         ],
                       ),
@@ -475,7 +486,6 @@ class _SoftField extends StatelessWidget {
   final bool obscureText;
   final Widget? suffixIcon;
   final String? Function(String?)? validator;
-  final TextCapitalization textCapitalization;
   final ColorScheme cs;
   final TextTheme tt;
 
@@ -488,7 +498,6 @@ class _SoftField extends StatelessWidget {
     this.obscureText = false,
     this.suffixIcon,
     this.validator,
-    this.textCapitalization = TextCapitalization.none,
   });
 
   @override
@@ -499,7 +508,6 @@ class _SoftField extends StatelessWidget {
     return TextFormField(
       controller: controller,
       obscureText: obscureText,
-      textCapitalization: textCapitalization,
       validator: validator,
       style: tt.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
       decoration: InputDecoration(

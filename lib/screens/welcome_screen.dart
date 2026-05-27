@@ -2,8 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
-import '../services/api_service.dart';
 import '../services/health_service.dart';
+import '../services/storage_service.dart';
 import '../services/native_health_service.dart';
 import '../services/settings_service.dart';
 import '../widgets/app_page_route.dart';
@@ -23,11 +23,17 @@ class WelcomeScreen extends StatefulWidget {
 class _WelcomeScreenState extends State<WelcomeScreen> {
   final _healthService = HealthService();
   bool _loading = false;
+  bool _submittedToday = false;
 
   @override
   void initState() {
     super.initState();
-    ApiService().flushQueue();
+    _checkToday();
+  }
+
+  Future<void> _checkToday() async {
+    final result = await StorageService().hasSubmissionToday();
+    if (mounted) setState(() => _submittedToday = result);
   }
 
   Future<void> _requestAndContinue() async {
@@ -185,6 +191,42 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     ),
 
                     const Spacer(),
+
+                    if (_submittedToday) ...[
+                      FadeSlideIn(
+                        delay: const Duration(milliseconds: 190),
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: cs.tertiaryContainer.withValues(alpha: 0.7),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.check_circle_outline_rounded,
+                                  size: 18, color: cs.tertiary),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(l.alreadySubmittedToday,
+                                        style: tt.labelMedium?.copyWith(
+                                            fontWeight: FontWeight.w600,
+                                            color: cs.onTertiaryContainer)),
+                                    Text(l.alreadySubmittedTodayDesc,
+                                        style: tt.labelSmall?.copyWith(
+                                            color: cs.onTertiaryContainer
+                                                .withValues(alpha: 0.8))),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
 
                                         FadeSlideIn(
                       delay: const Duration(milliseconds: 210),

@@ -29,29 +29,28 @@ class SupabaseService {
     required String gender,
     String? ageRange,
     int? heightCm,
+    String? email,
   }) async {
-    final email = _toEmail(participantId);
+    final authEmail = (email != null && email.trim().isNotEmpty)
+        ? email.trim().toLowerCase()
+        : _toEmail(participantId);
     final res = await client.auth.signUp(
-      email: email,
+      email: authEmail,
       password: password,
       data: {'participant_id': participantId},
     );
     if (res.user != null) {
-      await client.from('profiles').insert({
+      final profileData = <String, dynamic>{
         'id': res.user!.id,
         'participant_id': participantId,
         'first_name': firstName,
         'last_name': lastName,
         'gender': gender,
-      });
-      if (heightCm != null) {
-        try {
-          await client
-              .from('profiles')
-              .update({'height_cm': heightCm})
-              .eq('id', res.user!.id);
-        } catch (_) {}
-      }
+        'auth_email': authEmail,
+      };
+      if (ageRange != null) profileData['age_range'] = ageRange;
+      if (heightCm != null) profileData['height_cm'] = heightCm;
+      await client.from('profiles').insert(profileData);
     }
     return res;
   }
@@ -60,10 +59,59 @@ class SupabaseService {
     required String participantId,
     required String password,
   }) async {
-    return await client.auth.signInWithPassword(
-      email: _toEmail(participantId),
-      password: password,
-    );
+    if (participantId.contains('@')) {
+      return await client.auth.signInWithPassword(
+        email: participantId.trim().toLowerCase(),
+        password: password,
+      );
+    }
+    try {
+      return await client.auth.signInWithPassword(
+        email: _toEmail(participantId),
+        password: password,
+      );
+    } on AuthException {
+      // If fake-email login fails, look up the real auth email stored in profiles
+      try {
+        final result = await client
+            .from('profiles')
+            .select('auth_email')
+            .eq('participant_id', participantId.trim().toUpperCase())
+            .maybeSingle();
+        final authEmail = result?['auth_email'] as String?;
+        if (authEmail != null && authEmail.isNotEmpty && !authEmail.endsWith('@healthresearch.app')) {
+          return await client.auth.signInWithPassword(
+            email: authEmail,
+            password: password,
+          );
+        }
+      } catch (_) {}
+      rethrow;
+    }
+  }
+
+  Future<void> sendPasswordResetOtp(String email) async {
+    await client.auth.signInWithOtp(email: email.trim().toLowerCase());
+  }
+
+  Future<AuthResponse> verifyPasswordResetOtp(String email, String token) async {
+    try {
+      return await client.auth.verifyOTP(
+        email: email.trim().toLowerCase(),
+        token: token.trim(),
+        type: OtpType.email,
+      );
+    } on AuthException {
+      return await client.auth.verifyOTP(
+        email: email.trim().toLowerCase(),
+        token: token.trim(),
+        type: OtpType.magiclink,
+      );
+    }
+  }
+
+  Future<void> updatePassword(String newPassword) async {
+    await client.auth.updateUser(UserAttributes(password: newPassword));
   }
 
   Future<void> signOut() async {
@@ -147,6 +195,33 @@ class SupabaseService {
         .from('profiles')
         .update({'consent_given': true})
         .eq('id', currentUser!.id);
+  }
+
+  bool get hasRealEmail =>
+      !(currentUser?.email?.endsWith('@healthresearch.app') ?? true);
+
+  Future<void> sendChangePasswordOtp() async {
+    if (currentUser == null) throw Exception('Not authenticated');
+    await client.auth.reauthenticate();
+  }
+
+  Future<void> changePasswordWithOtp(String newPassword, String otp) async {
+    final email = currentUser?.email;
+    if (email == null) throw Exception('No email linked');
+    try {
+      await client.auth.verifyOTP(
+        email: email,
+        token: otp.trim(),
+        type: OtpType.email,
+      );
+    } on AuthException {
+      await client.auth.verifyOTP(
+        email: email,
+        token: otp.trim(),
+        type: OtpType.magiclink,
+      );
+    }
+    await client.auth.updateUser(UserAttributes(password: newPassword));
   }
 
   Future<void> changePassword(String newPassword) async {

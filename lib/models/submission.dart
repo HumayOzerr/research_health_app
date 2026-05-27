@@ -1,5 +1,7 @@
 import 'dart:io';
 
+const _kAppVersion = '1.0.0';
+
 class Submission {
   final String id;
   final DateTime timestamp;
@@ -238,7 +240,7 @@ class Submission {
         'id': id,
         'timestamp_utc': now.toIso8601String(),
         'created_at_utc': createdAt.toUtc().toIso8601String(),
-        'app_version': '0.1.0',
+        'app_version': _kAppVersion,
       },
       'participant': {
         'id': participantId,

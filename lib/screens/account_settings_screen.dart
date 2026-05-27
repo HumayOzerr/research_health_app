@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../l10n/app_localizations.dart';
@@ -57,9 +58,10 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
 
   Future<void> _loadProfile() async {
     try {
+      final userId = SupabaseService().currentUser?.id ?? '';
       final results = await Future.wait([
         SupabaseService().getProfile(),
-        ProfilePhotoService.load(),
+        ProfilePhotoService.load(userId),
       ]);
       if (mounted) {
         final profile = results[0] as Map<String, dynamic>?;
@@ -150,11 +152,11 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
     if (!mounted) return;
     if (source == null && _photo != null) {
       if (_photo != null) FileImage(_photo!).evict();
-      await ProfilePhotoService.delete();
+      await ProfilePhotoService.delete(SupabaseService().currentUser?.id ?? '');
       setState(() => _photo = null);
     } else if (source != null) {
       try {
-        final file = await ProfilePhotoService.pick(source: source);
+        final file = await ProfilePhotoService.pick(source: source, userId: SupabaseService().currentUser?.id ?? '');
         if (file != null && mounted) {
           if (_photo != null) FileImage(_photo!).evict();
           FileImage(file).evict();
@@ -712,18 +714,56 @@ class _ChangePasswordSheet extends StatefulWidget {
 
 class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
   final _formKey = GlobalKey<FormState>();
+  final _codeCtrl = TextEditingController();
   final _newCtrl = TextEditingController();
   final _confirmCtrl = TextEditingController();
   bool _obscureNew = true;
   bool _obscureConfirm = true;
   bool _loading = false;
   String? _error;
+  String _password = '';
+  bool _codeSent = false;
+
+  bool get _hasLength => _password.length >= 8;
+  bool get _hasUpper => _password.contains(RegExp(r'[A-Z]'));
+  bool get _hasLower => _password.contains(RegExp(r'[a-z]'));
+  bool get _hasDigit => _password.contains(RegExp(r'[0-9]'));
+  bool get _hasSpecial =>
+      _password.contains(RegExp(r'[!@#\$%^&*(),.?":{}|<>_\-]'));
+  bool get _passwordValid =>
+      _hasLength && _hasUpper && _hasLower && _hasDigit && _hasSpecial;
 
   @override
   void dispose() {
+    _codeCtrl.dispose();
     _newCtrl.dispose();
     _confirmCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _sendCode() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      await SupabaseService().sendChangePasswordOtp();
+      setState(() => _codeSent = true);
+    } on AuthException catch (e) {
+      if (mounted) {
+        final l = AppLocalizations.of(context);
+        final msg = e.message.toLowerCase();
+        setState(() => _error = msg.contains('security purposes') || msg.contains('rate limit') || msg.contains('after')
+            ? l.errorRateLimit
+            : l.errorUnexpected);
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _error = AppLocalizations.of(context).errorUnexpected);
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   Future<void> _submit() async {
@@ -733,7 +773,10 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
       _error = null;
     });
     try {
-      await SupabaseService().changePassword(_newCtrl.text);
+      await SupabaseService().changePasswordWithOtp(
+        _newCtrl.text,
+        _codeCtrl.text.trim(),
+      );
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -741,10 +784,21 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
           behavior: SnackBarBehavior.floating,
         ));
       }
+    } on AuthException catch (e) {
+      if (mounted) {
+        final l = AppLocalizations.of(context);
+        final msg = e.message.toLowerCase();
+        setState(() => _error = msg.contains('same') || msg.contains('different') || msg.contains('should be different')
+            ? l.errorSamePassword
+            : msg.contains('security purposes') || msg.contains('rate limit') || msg.contains('after')
+                ? l.errorRateLimit
+                : msg.contains('invalid') || msg.contains('expired') || msg.contains('token') || msg.contains('otp')
+                    ? l.verificationCode
+                    : l.errorUnexpected);
+      }
     } catch (_) {
       if (mounted) {
-        setState(
-            () => _error = AppLocalizations.of(context).errorUnexpected);
+        setState(() => _error = AppLocalizations.of(context).errorUnexpected);
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -756,8 +810,10 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
     final l = AppLocalizations.of(context);
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final email = SupabaseService().currentUser?.email ?? '';
+    final hasRealEmail = !email.endsWith('@healthresearch.app');
 
-    return Padding(
+    return SingleChildScrollView(
       padding: EdgeInsets.only(
         left: 24,
         right: 24,
@@ -794,74 +850,268 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
                 ),
                 const SizedBox(width: 12),
                 Text(l.changePassword,
-                    style: tt.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.bold)),
+                    style: tt.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
               ],
             ),
             const SizedBox(height: 20),
-            SoftField(
-              controller: _newCtrl,
-              label: l.newPassword,
-              icon: Icons.lock_outlined,
-              obscureText: _obscureNew,
-              suffixIcon: IconButton(
-                icon: Icon(_obscureNew
-                    ? Icons.visibility_outlined
-                    : Icons.visibility_off_outlined),
-                onPressed: () =>
-                    setState(() => _obscureNew = !_obscureNew),
-              ),
-              validator: (v) =>
-                  (v == null || v.length < 8) ? l.passwordError : null,
-            ),
-            const SizedBox(height: 12),
-            SoftField(
-              controller: _confirmCtrl,
-              label: l.confirmPassword,
-              icon: Icons.lock_outlined,
-              obscureText: _obscureConfirm,
-              suffixIcon: IconButton(
-                icon: Icon(_obscureConfirm
-                    ? Icons.visibility_outlined
-                    : Icons.visibility_off_outlined),
-                onPressed: () =>
-                    setState(() => _obscureConfirm = !_obscureConfirm),
-              ),
-              validator: (v) =>
-                  v != _newCtrl.text ? l.confirmPasswordError : null,
-            ),
-            if (_error != null) ...[
-              const SizedBox(height: 10),
+            if (!hasRealEmail) ...[
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: cs.errorContainer,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child:
-                    Text(_error!, style: TextStyle(color: cs.onErrorContainer)),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.info_outline_rounded,
+                        size: 18, color: cs.onErrorContainer),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(l.noEmailLinked,
+                          style: tt.bodySmall
+                              ?.copyWith(color: cs.onErrorContainer)),
+                    ),
+                  ],
+                ),
+              ),
+            ] else if (!_codeSent) ...[
+              Text(l.changePasswordVerify,
+                  style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
+              const SizedBox(height: 12),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: cs.surfaceContainerHighest.withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.email_outlined, size: 18, color: cs.primary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(email,
+                          style: tt.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w500)),
+                    ),
+                  ],
+                ),
+              ),
+              if (_error != null) ...[
+                const SizedBox(height: 10),
+                _ErrorBox(message: _error!, cs: cs, tt: tt),
+              ],
+              const SizedBox(height: 20),
+              FilledButton(
+                onPressed: _loading ? null : _sendCode,
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(52),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
+                ),
+                child: _loading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
+                    : Text(l.sendResetCode,
+                        style:
+                            const TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ] else ...[
+              RichText(
+                text: TextSpan(
+                  style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+                  children: [
+                    TextSpan(text: '${l.codeSentTo} '),
+                    TextSpan(
+                      text: email,
+                      style: TextStyle(
+                          fontWeight: FontWeight.w600, color: cs.primary),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              SoftField(
+                controller: _codeCtrl,
+                label: l.verificationCode,
+                icon: Icons.pin_outlined,
+                keyboardType: TextInputType.number,
+                textInputAction: TextInputAction.next,
+                validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? l.verificationCode : null,
+              ),
+              const SizedBox(height: 12),
+              SoftField(
+                controller: _newCtrl,
+                label: l.newPassword,
+                icon: Icons.lock_outlined,
+                obscureText: _obscureNew,
+                textInputAction: TextInputAction.next,
+                onChanged: (v) => setState(() => _password = v),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscureNew
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                    size: 20,
+                    color: cs.onSurfaceVariant,
+                  ),
+                  onPressed: () =>
+                      setState(() => _obscureNew = !_obscureNew),
+                ),
+                validator: (v) => !_passwordValid ? l.passwordError : null,
+              ),
+              const SizedBox(height: 8),
+              _PwChecklist(
+                hasLength: _hasLength,
+                hasUpper: _hasUpper,
+                hasLower: _hasLower,
+                hasDigit: _hasDigit,
+                hasSpecial: _hasSpecial,
+                l: l,
+              ),
+              const SizedBox(height: 12),
+              SoftField(
+                controller: _confirmCtrl,
+                label: l.confirmPassword,
+                icon: Icons.lock_outlined,
+                obscureText: _obscureConfirm,
+                textInputAction: TextInputAction.done,
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscureConfirm
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                    size: 20,
+                    color: cs.onSurfaceVariant,
+                  ),
+                  onPressed: () =>
+                      setState(() => _obscureConfirm = !_obscureConfirm),
+                ),
+                validator: (v) =>
+                    v != _newCtrl.text ? l.confirmPasswordError : null,
+              ),
+              if (_error != null) ...[
+                const SizedBox(height: 10),
+                _ErrorBox(message: _error!, cs: cs, tt: tt),
+              ],
+              const SizedBox(height: 20),
+              FilledButton(
+                onPressed: _loading ? null : _submit,
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(52),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
+                ),
+                child: _loading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
+                    : Text(l.changePassword,
+                        style:
+                            const TextStyle(fontWeight: FontWeight.bold)),
               ),
             ],
-            const SizedBox(height: 20),
-            FilledButton(
-              onPressed: _loading ? null : _submit,
-              style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(52),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16)),
-              ),
-              child: _loading
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white))
-                  : Text(l.changePassword,
-                      style:
-                          const TextStyle(fontWeight: FontWeight.bold)),
-            ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ErrorBox extends StatelessWidget {
+  final String message;
+  final ColorScheme cs;
+  final TextTheme tt;
+  const _ErrorBox({required this.message, required this.cs, required this.tt});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: cs.errorContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline_rounded,
+              size: 18, color: cs.onErrorContainer),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(message,
+                style: tt.bodySmall?.copyWith(color: cs.onErrorContainer)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PwChecklist extends StatelessWidget {
+  final bool hasLength, hasUpper, hasLower, hasDigit, hasSpecial;
+  final AppLocalizations l;
+
+  const _PwChecklist({
+    required this.hasLength,
+    required this.hasUpper,
+    required this.hasLower,
+    required this.hasDigit,
+    required this.hasSpecial,
+    required this.l,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        _PwItem(met: hasLength, label: l.passwordRuleLength),
+        _PwItem(met: hasUpper, label: l.passwordRuleUppercase),
+        _PwItem(met: hasLower, label: l.passwordRuleLowercase),
+        _PwItem(met: hasDigit, label: l.passwordRuleDigit),
+        _PwItem(met: hasSpecial, label: l.passwordRuleSpecial),
+      ],
+    );
+  }
+}
+
+class _PwItem extends StatelessWidget {
+  final bool met;
+  final String label;
+  const _PwItem({required this.met, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final color = met ? Colors.green : cs.onSurfaceVariant;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: Icon(
+              met
+                  ? Icons.check_circle_rounded
+                  : Icons.radio_button_unchecked_rounded,
+              key: ValueKey(met),
+              size: 16,
+              color: color,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(label,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(color: color)),
+        ],
       ),
     );
   }
