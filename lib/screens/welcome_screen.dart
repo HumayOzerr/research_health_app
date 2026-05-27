@@ -114,7 +114,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             const SizedBox(height: 18),
 
                         Expanded(
-              child: Padding(
+              child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(24, 0, 24, 10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -190,7 +190,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       ),
                     ),
 
-                    const Spacer(),
+                    const SizedBox(height: 24),
 
                     if (_submittedToday) ...[
                       FadeSlideIn(
