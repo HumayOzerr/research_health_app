@@ -119,9 +119,18 @@ class _FormScreenState extends State<FormScreen> {
     return _selectedDate == DateTime(now.year, now.month, now.day);
   }
 
-  int get _cycleDay => _lastPeriodStart != null
-      ? _selectedDate.difference(_lastPeriodStart!).inDays + 1
-      : 0;
+  int get _cycleDay {
+    if (_lastPeriodStart == null) return 0;
+    return _selectedDate.difference(_lastPeriodStart!).inDays + 1;
+  }
+
+  // True when the selected date is within an active/recent cycle (days 1–35)
+  bool get _isContinuingCycle =>
+      _lastPeriodStart != null && _cycleDay >= 1 && _cycleDay <= 35;
+
+  // True when a new period entry is expected (no history or cycle too long)
+  bool get _isNewCycleExpected =>
+      _lastPeriodStart == null || _cycleDay < 1 || _cycleDay > 35;
 
   String _cyclePhase(int day) => switch (day) {
         <= 5 => 'menstrual',
@@ -180,8 +189,8 @@ class _FormScreenState extends State<FormScreen> {
           ageRange: _ageRange ?? '',
           gender: _gender,
           hasPeriod: _showMenstrual ? _hasPeriod : null,
-          cycleDay: _showMenstrual && day > 0 ? day : null,
-          cyclePhase: _showMenstrual && day > 0 ? _cyclePhase(day) : null,
+          cycleDay: _showMenstrual && day >= 1 ? day : null,
+          cyclePhase: _showMenstrual && day >= 1 ? _cyclePhase(day) : null,
           lastPeriodStart: _showMenstrual ? _lastPeriodStart : null,
           wellbeingRating: _rating,
           sleepQuality: _sleepQuality,
@@ -529,9 +538,11 @@ class _FormScreenState extends State<FormScreen> {
                             children: [
                               Expanded(
                                 child: Text(
-                                  _lastPeriodStart != null
-                                      ? l.newPeriodQuestion
-                                      : l.onPeriodQuestion,
+                                  _isContinuingCycle
+                                      ? l.periodContinuesQuestion
+                                      : _cycleDay > 35
+                                          ? l.newPeriodQuestion
+                                          : l.onPeriodQuestion,
                                   style: tt.bodyMedium,
                                 ),
                               ),
@@ -554,15 +565,29 @@ class _FormScreenState extends State<FormScreen> {
                                     _hasPeriod =
                                         s.isEmpty ? null : s.first;
                                     if (_hasPeriod == true) {
-                                      _lastPeriodStart = DateTime(
-                                          _selectedDate.year,
-                                          _selectedDate.month,
-                                          _selectedDate.day);
-                                      _lastPeriodStartUpdated = true;
-                                    } else if (prev == true) {
+                                      // Only reset the period start date when
+                                      // it's genuinely a new cycle (no history,
+                                      // selected date is before the recorded
+                                      // start, or it's been > 35 days).
+                                      if (_isNewCycleExpected) {
+                                        _lastPeriodStart = DateTime(
+                                            _selectedDate.year,
+                                            _selectedDate.month,
+                                            _selectedDate.day);
+                                        _lastPeriodStartUpdated = true;
+                                      }
+                                      // Continuing cycle: hasPeriod = true
+                                      // but keep existing _lastPeriodStart.
+                                    } else if (prev == true &&
+                                        _isNewCycleExpected) {
+                                      // Reverted from a just-entered new cycle
+                                      // — restore the saved start date.
                                       _lastPeriodStart = _savedPeriodStart;
                                       _lastPeriodStartUpdated = false;
                                     }
+                                    // If prev was true and cycle is continuing,
+                                    // keep lastPeriodStart as-is (period ended
+                                    // mid-cycle; it stays for phase tracking).
                                   });
                                 },
                               ),
@@ -594,7 +619,7 @@ class _FormScreenState extends State<FormScreen> {
                               ],
                             ),
                           ],
-                          if (_lastPeriodStart != null) ...[
+                          if (_lastPeriodStart != null && _cycleDay >= 1) ...[
                             const SizedBox(height: 16),
                             const Divider(height: 1),
                             const SizedBox(height: 14),

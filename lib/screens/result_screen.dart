@@ -2,7 +2,9 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:printing/printing.dart';
 import '../l10n/app_localizations.dart';
+import '../services/pdf_export_service.dart';
 import '../services/settings_service.dart';
 import '../widgets/app_bar_title.dart';
 import '../widgets/app_page_route.dart';
@@ -27,9 +29,35 @@ class ResultScreen extends StatefulWidget {
 
 class _ResultScreenState extends State<ResultScreen> {
   bool _showJson = false;
+  bool _pdfLoading = false;
 
   Map<String, dynamic> get _data =>
       jsonDecode(widget.payload) as Map<String, dynamic>;
+
+  Future<void> _downloadPdf() async {
+    setState(() => _pdfLoading = true);
+    try {
+      final bytes = await buildSubmissionPdf(_data, AppLocalizations.of(context));
+      final data = _data;
+      final submission = data['submission'] as Map<String, dynamic>?;
+      final rawDate = submission?['submitted_at']?.toString() ?? '';
+      String dateTag = 'report';
+      try {
+        final dt = DateTime.parse(rawDate).toLocal();
+        dateTag =
+            '${dt.year}${dt.month.toString().padLeft(2, '0')}${dt.day.toString().padLeft(2, '0')}';
+      } catch (_) {}
+      await Printing.sharePdf(bytes: bytes, filename: 'heaLife_$dateTag.pdf');
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('PDF error: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _pdfLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,11 +91,22 @@ class _ResultScreenState extends State<ResultScreen> {
     final participant = data['participant'] as Map<String, dynamic>?;
     final selfReport = data['self_report'] as Map<String, dynamic>?;
     final wellbeing = selfReport?['wellbeing_rating'] as Map<String, dynamic>?;
+    final sleepQMap = selfReport?['sleep_quality'] as Map<String, dynamic>?;
+    final painMap = selfReport?['pain'] as Map<String, dynamic>?;
     final rating = wellbeing?['value'] as int?;
+    final sleepQuality = (sleepQMap?['value'] as int?);
+    final neuropathic = (((painMap?['neuropathic'] as Map?)?['value']) as int?);
+    final musculoskeletal = (((painMap?['musculoskeletal'] as Map?)?['value']) as int?);
     final comment = selfReport?['comment'] as String?;
     final bloodGlucose = (selfReport?['blood_glucose_mgdl'] as num?)?.toDouble();
     final metrics = data['health_metrics'] as List<dynamic>?;
     final metricCount = metrics?.length ?? 0;
+    final metricMap = <String, num>{};
+    for (final m in metrics ?? []) {
+      final t = (m as Map)['type'] as String?;
+      final v = m['value'] as num?;
+      if (t != null && v != null) metricMap[t] = v;
+    }
 
     return PopScope(
       canPop: false,
@@ -126,6 +165,20 @@ class _ResultScreenState extends State<ResultScreen> {
               ),
             ),
           ],
+
+          const SizedBox(height: 20),
+          FadeSlideIn(
+            delay: const Duration(milliseconds: 150),
+            child: _InsightCard(
+              rating: rating,
+              sleepQuality: sleepQuality,
+              neuropathic: neuropathic,
+              musculoskeletal: musculoskeletal,
+              steps: (metricMap['step_count'] as int?),
+              bloodGlucose: bloodGlucose,
+              l: l,
+            ),
+          ),
 
           const SizedBox(height: 28),
           FadeSlideIn(
@@ -277,9 +330,32 @@ class _ResultScreenState extends State<ResultScreen> {
             ),
           ],
 
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
           FadeSlideIn(
-            delay: const Duration(milliseconds: 380),
+            delay: const Duration(milliseconds: 360),
+            child: ElevatedButton.icon(
+              onPressed: _pdfLoading ? null : _downloadPdf,
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
+                backgroundColor: cs.primary,
+                foregroundColor: cs.onPrimary,
+              ),
+              icon: _pdfLoading
+                  ? SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: cs.onPrimary,
+                      ),
+                    )
+                  : const Icon(Icons.picture_as_pdf_rounded),
+              label: Text(_pdfLoading ? l.pdfGenerating : l.downloadPdf),
+            ),
+          ),
+          const SizedBox(height: 12),
+          FadeSlideIn(
+            delay: const Duration(milliseconds: 400),
             child: OutlinedButton(
               onPressed: () => Navigator.pushAndRemoveUntil(
                 context,
@@ -298,6 +374,213 @@ class _ResultScreenState extends State<ResultScreen> {
   }
 }
 
+
+// ─────────────────────────────────────────────────────────────────
+// Insight / assessment card
+// ─────────────────────────────────────────────────────────────────
+class _InsightCard extends StatelessWidget {
+  final int? rating;
+  final int? sleepQuality;
+  final int? neuropathic;
+  final int? musculoskeletal;
+  final int? steps;
+  final double? bloodGlucose;
+  final AppLocalizations l;
+
+  const _InsightCard({
+    required this.rating,
+    required this.sleepQuality,
+    required this.neuropathic,
+    required this.musculoskeletal,
+    required this.steps,
+    required this.bloodGlucose,
+    required this.l,
+  });
+
+  // Returns 0.0–1.0 representing overall wellness score
+  double _score() {
+    double points = 0;
+    double max = 0;
+    if (rating != null) {
+      max += 4;
+      points += (rating! - 1).clamp(0, 4).toDouble();
+    }
+    if (sleepQuality != null) {
+      max += 4;
+      points += (sleepQuality! - 1).clamp(0, 4).toDouble();
+    }
+    if (neuropathic != null || musculoskeletal != null) {
+      max += 10;
+      final avg = ((neuropathic ?? 0) + (musculoskeletal ?? 0)) /
+          ((neuropathic != null && musculoskeletal != null) ? 2 : 1);
+      points += (10 - avg).clamp(0, 10);
+    }
+    return max > 0 ? (points / max).clamp(0.0, 1.0) : 0.5;
+  }
+
+  List<String> _observations() {
+    final obs = <String>[];
+    if (rating != null) {
+      if (rating! >= 4) { obs.add(l.insightHighMood); }
+      else if (rating! <= 2) { obs.add(l.insightLowMood); }
+    }
+    if (sleepQuality != null) {
+      if (sleepQuality! >= 4) { obs.add(l.insightGoodSleepQ); }
+      else if (sleepQuality! <= 2) { obs.add(l.insightPoorSleepQ); }
+    }
+    final avgPain = neuropathic != null || musculoskeletal != null
+        ? ((neuropathic ?? 0) + (musculoskeletal ?? 0)) /
+            ((neuropathic != null && musculoskeletal != null) ? 2 : 1)
+        : null;
+    if (avgPain != null) {
+      if (avgPain <= 1) { obs.add(l.insightLowPain); }
+      else if (avgPain >= 6) { obs.add(l.insightHighPain); }
+    }
+    if (steps != null) {
+      if (steps! >= 7500) { obs.add(l.insightHighActivity); }
+      else if (steps! < 2000) { obs.add(l.insightLowActivity); }
+    }
+    if (bloodGlucose != null) {
+      if (bloodGlucose! < 70) { obs.add(l.insightGlucoseLow); }
+      else if (bloodGlucose! <= 140) { obs.add(l.insightGlucoseNormal); }
+      else { obs.add(l.insightGlucoseHigh); }
+    }
+    return obs.take(4).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    final score = _score();
+    final observations = _observations();
+
+    final String levelLabel;
+    final String subLabel;
+    final Color levelColor;
+    final IconData levelIcon;
+
+    if (score >= 0.78) {
+      levelLabel = l.insightExcellent;
+      subLabel = l.insightExcellentSub;
+      levelColor = const Color(0xFF2E7D32);
+      levelIcon = Icons.star_rounded;
+    } else if (score >= 0.55) {
+      levelLabel = l.insightGood;
+      subLabel = l.insightGoodSub;
+      levelColor = const Color(0xFF1565C0);
+      levelIcon = Icons.thumb_up_rounded;
+    } else if (score >= 0.35) {
+      levelLabel = l.insightFair;
+      subLabel = l.insightFairSub;
+      levelColor = const Color(0xFFF57C00);
+      levelIcon = Icons.sentiment_neutral_rounded;
+    } else {
+      levelLabel = l.insightChallenging;
+      subLabel = l.insightChallengingSub;
+      levelColor = const Color(0xFF546E7A);
+      levelIcon = Icons.favorite_rounded;
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: levelColor.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: levelColor.withValues(alpha: 0.25), width: 1.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header row
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: levelColor.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(levelIcon, size: 20, color: levelColor),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l.insightTitle,
+                        style: tt.labelSmall?.copyWith(
+                          color: levelColor.withValues(alpha: 0.8),
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.4,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        levelLabel,
+                        style: tt.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: levelColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Divider(height: 1, color: levelColor.withValues(alpha: 0.18)),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  subLabel,
+                  style: tt.bodySmall?.copyWith(
+                    color: cs.onSurfaceVariant,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+                if (observations.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  ...observations.map((obs) => Padding(
+                        padding: const EdgeInsets.only(bottom: 5),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              margin: const EdgeInsets.only(top: 5, right: 8),
+                              decoration: BoxDecoration(
+                                color: levelColor,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            Expanded(
+                              child: Text(
+                                obs,
+                                style: tt.bodySmall?.copyWith(
+                                  color: cs.onSurface,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class _SummaryRow extends StatelessWidget {
   final IconData icon;
