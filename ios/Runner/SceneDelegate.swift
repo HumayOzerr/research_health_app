@@ -19,9 +19,9 @@ class SceneDelegate: FlutterSceneDelegate {
     registerNativeHealthIfNeeded()
   }
 
-  // Search all connected UIWindowScenes for a FlutterViewController.
-  // self.window can be nil when FlutterSceneDelegate manages the window
-  // through the scene directly, so we enumerate scenes instead.
+
+
+
   private func registerNativeHealthIfNeeded() {
     guard !healthPluginRegistered else { return }
 
@@ -38,7 +38,7 @@ class SceneDelegate: FlutterSceneDelegate {
       if messenger != nil { break }
     }
 
-    // Fallback: self.window (works in some FlutterSceneDelegate configurations)
+
     if messenger == nil,
        let vc = window?.rootViewController as? FlutterViewController {
       messenger = vc.binaryMessenger

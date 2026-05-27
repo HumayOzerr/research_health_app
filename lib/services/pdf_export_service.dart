@@ -241,7 +241,7 @@ Future<Uint8List> buildSubmissionPdf(
 }
 
 String _p(String s) => s
-    .replaceAll('—', ' - ')      .replaceAll('–', '-')        .replaceAll('−', '-')        .replaceAll('’', '\'')       .replaceAll('‘', '\'')       .replaceAll('“', '"')        .replaceAll('”', '"')        .replaceAll('•', '-');   
+    .replaceAll('—', ' - ')      .replaceAll('–', '-')        .replaceAll('−', '-')        .replaceAll('’', '\'')       .replaceAll('‘', '\'')       .replaceAll('“', '"')        .replaceAll('”', '"')        .replaceAll('•', '-');
 double _computeScore(int? rating, int? sleepQ, int? neuro, int? musculo) {
   double pts = 0, max = 0;
   if (rating != null)  { max += 4; pts += (rating - 1).clamp(0, 4).toDouble(); }

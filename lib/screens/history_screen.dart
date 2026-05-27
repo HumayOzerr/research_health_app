@@ -657,7 +657,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
             const SizedBox(height: 12),
           ],
 
-
           if (!_healthLoading && headphoneRange.isNotEmpty) ...[
             FadeSlideIn(
               delay: const Duration(milliseconds: 149),

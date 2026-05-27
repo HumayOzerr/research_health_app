@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'l10n/app_localizations.dart';
+import 'services/api_service.dart';
 import 'services/settings_service.dart';
 import 'services/supabase_service.dart';
 import 'screens/login_screen.dart';
@@ -12,6 +13,10 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SupabaseService.initialize();
   await SettingsService().load();
+
+  if (SupabaseService().isLoggedIn) {
+    ApiService().flushQueue();
+  }
 
   bool consentGiven = false;
   final userId = SupabaseService().currentUser?.id;

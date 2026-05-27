@@ -9,7 +9,7 @@ class NativeHealthPlugin: NSObject {
     private static var _channel: FlutterMethodChannel?
     private static var _instance: NativeHealthPlugin?
 
-    // MARK: - Channel setup
+
 
     @objc static func setup(messenger: FlutterBinaryMessenger) {
         guard _channel == nil else { return }
@@ -26,7 +26,7 @@ class NativeHealthPlugin: NSObject {
         NSLog("[NativeHealth] channel registered ✓")
     }
 
-    // MARK: - Dispatch
+
 
     private func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         guard HKHealthStore.isHealthDataAvailable() else {
@@ -55,7 +55,7 @@ class NativeHealthPlugin: NSObject {
         }
     }
 
-    // MARK: - Permissions
+
 
     private func requestPermissions(result: @escaping FlutterResult) {
         var types: Set<HKObjectType> = []
@@ -79,10 +79,10 @@ class NativeHealthPlugin: NSObject {
         }
     }
 
-    // MARK: - Walking metrics
-    // Primary: query the specific survey day.
-    // Fallback: if the day returns nothing, widen to the past 7 days so that
-    // recent gait samples recorded on adjacent days are still captured.
+
+
+
+
 
     private func getWalkingMetrics(dateString: String, result: @escaping FlutterResult) {
         let (start, end) = dayRange(for: dateString)
@@ -113,7 +113,7 @@ class NativeHealthPlugin: NSObject {
                 if let v = v {
                     add(key, v * scale); group.leave()
                 } else {
-                    // day had no data — try the past 7 days
+
                     self.queryAvg(id, unit: unit, predicate: weekPred) { v2 in
                         add(key, v2.map { $0 * scale }); group.leave()
                     }
@@ -132,7 +132,7 @@ class NativeHealthPlugin: NSObject {
         group.notify(queue: .main) { result(out) }
     }
 
-    // MARK: - Audio metrics (headphone only — environmental audio not stored by iOS Health)
+
 
     private func getAudioMetrics(dateString: String, result: @escaping FlutterResult) {
         let (start, end) = dayRange(for: dateString)
@@ -161,7 +161,7 @@ class NativeHealthPlugin: NSObject {
         }
     }
 
-    // MARK: - Helpers
+
 
     private func queryAvg(
         _ identifier: HKQuantityTypeIdentifier,
@@ -185,7 +185,7 @@ class NativeHealthPlugin: NSObject {
         store.execute(q)
     }
 
-    // MARK: - Range queries (weekly Apple Health charts)
+
 
     private func getWalkingMetricsRange(startString: String, result: @escaping FlutterResult) {
         let fmt = ISO8601DateFormatter()

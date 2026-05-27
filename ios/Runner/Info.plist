@@ -31,7 +31,7 @@
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Used to pick a profile photo from your library.</string>
 	<key>NSHealthShareUsageDescription</key>
-	<string>This app reads steps, heart rate, sleep, active energy, walking metrics (step length, asymmetry, steadiness), audio exposure, and other health data to include in the research data submission.</string>
+	<string>This app reads steps, heart rate, sleep, active energy, walking metrics (step length, asymmetry, double support time), audio exposure, and other health data to include in the research data submission.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>This app does not write any health data.</string>
 	<key>UIApplicationSceneManifest</key>
