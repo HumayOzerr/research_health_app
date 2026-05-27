@@ -163,7 +163,6 @@ flutter run -d "emulator-5554"    # Android emulator
 
 When the app starts, accept the Health Connect permission dialog.
 
-> **What is Health Connect?** It is Google's system for storing health data on Android — the Android version of Apple HealthKit. The app reads step count and other metrics from it. On Android 14 and above it is already on the phone. On Android 13 or older, search for **"Health Connect"** on the Play Store and install it before running the app.
 
 ### All Platforms
 
