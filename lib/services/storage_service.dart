@@ -10,8 +10,7 @@ class StorageService {
     final prefs = await _prefs;
     final history = prefs.getStringList(_historyKey) ?? [];
     final entry = jsonEncode({'status': status, 'data': json});
-    history.insert(0, entry); // newest first
-    if (history.length > 100) history.removeLast();
+    history.insert(0, entry);     if (history.length > 100) history.removeLast();
     await prefs.setStringList(_historyKey, history);
   }
 

@@ -331,18 +331,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
     const cStepLen = Color(0xFF00897B);
     const cAsym = Color(0xFFAB47BC);
     const cDblSupport = Color(0xFF3949AB);
-    const cSteadiness = Color(0xFF26A69A);
     const cHeadphone = Color(0xFFFF7043);
 
-    // ── Native health metrics (from Apple Health directly, with min/max range)
-    final stepLenRange   = (_weekNative['stepLen'] ?? <_RangePt>[])
+        final stepLenRange   = (_weekNative['stepLen'] ?? <_RangePt>[])
         .map((p) => (date: p.date, avg: p.avg * 100, min: p.min * 100, max: p.max * 100))
         .toList();
     final asymmetry      = (_weekNative['asymmetry'] ?? <_RangePt>[])
         .map((p) => (date: p.date, value: p.avg)).toList();
     final dblSupportRange = _weekNative['dblSupport'] ?? <_RangePt>[];
-    final steadiness     = (_weekNative['steadiness'] ?? <_RangePt>[])
-        .map((p) => (date: p.date, value: p.avg)).toList();
     final headphoneRange  = _weekNative['headphone'] ?? <_RangePt>[];
 
     final hasChartData = wellbeing.isNotEmpty || sleepQ.isNotEmpty ||
@@ -354,7 +350,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         weight.isNotEmpty || bmi.isNotEmpty ||
         flights.isNotEmpty || _hasMenstrual(filtered) ||
         stepLenRange.isNotEmpty || asymmetry.isNotEmpty ||
-        dblSupportRange.isNotEmpty || steadiness.isNotEmpty ||
+        dblSupportRange.isNotEmpty ||
         headphoneRange.isNotEmpty || glucose.isNotEmpty ||
         filtered.isNotEmpty;
 
@@ -661,22 +657,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
             const SizedBox(height: 12),
           ],
 
-          if (!_healthLoading && steadiness.isNotEmpty) ...[
-            FadeSlideIn(
-              delay: const Duration(milliseconds: 148),
-              child: _ChartCard(
-                icon: Icons.balance_rounded,
-                title: l.legendSteadiness,
-                color: cSteadiness,
-                info: l.infoSteadiness,
-                child: _MultiLineChart(
-                  series: [_Series(data: steadiness, color: cSteadiness)],
-                  minY: 0, maxY: 100, yInterval: 25, unit: '%',
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
 
           if (!_healthLoading && headphoneRange.isNotEmpty) ...[
             FadeSlideIn(
@@ -717,6 +697,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ...filtered.asMap().entries.map((e) => FadeSlideIn(
                   delay: Duration(milliseconds: 180 + e.key * 30),
                   child: _SubmissionCard(
+                    key: ValueKey(
+                      ((e.value['data'] as Map?)?['submission']?['id'] as String?) ?? e.key.toString(),
+                    ),
                     entry: e.value,
                     onDelete: () => setState(() => _history.remove(e.value)),
                   ),
@@ -1243,9 +1226,7 @@ class _RangeLineChart extends StatelessWidget {
     final count = data.length;
     final showEvery = count <= 4 ? 1 : count <= 8 ? 2 : 3;
 
-    // Bar order: 0=avg (visible), 1=max (invisible), 2=min (invisible)
-    // BetweenBarsData(fromIndex:1, toIndex:2) shades the min–max band.
-    final bars = [
+            final bars = [
       LineChartBarData(
         spots: data.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.avg)).toList(),
         color: color,
@@ -1753,7 +1734,7 @@ class _MenstrualStrip extends StatelessWidget {
 class _SubmissionCard extends StatefulWidget {
   final Map<String, dynamic> entry;
   final VoidCallback onDelete;
-  const _SubmissionCard({required this.entry, required this.onDelete});
+  const _SubmissionCard({super.key, required this.entry, required this.onDelete});
 
   @override
   State<_SubmissionCard> createState() => _SubmissionCardState();
@@ -1763,16 +1744,56 @@ class _SubmissionCardState extends State<_SubmissionCard> {
   bool _expanded = false;
   bool _showJson = false;
   bool _deleting = false;
-  bool _confirmingDelete = false;
 
-  Future<void> _doDelete() async {
-    setState(() { _confirmingDelete = false; _deleting = true; });
-    final id = (widget.entry['data'] as Map?)?['submission']?['id'] as String?;
-    if (id != null) {
-      await StorageService().deleteSubmission(id);
-      await SupabaseService().deleteSubmission(id);
+  Future<void> _doDelete(BuildContext dialogCtx) async {
+    Navigator.pop(dialogCtx);
+    setState(() => _deleting = true);
+    try {
+      final id = (widget.entry['data'] as Map?)?['submission']?['id'] as String?;
+      if (id != null) {
+        await StorageService().deleteSubmission(id);
+        await SupabaseService().deleteSubmission(id);
+      }
+      if (mounted) widget.onDelete();
+    } catch (e) {
+      if (mounted) {
+        setState(() => _deleting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Delete failed: $e')),
+        );
+      }
     }
-    if (mounted) widget.onDelete();
+  }
+
+  void _showDeleteDialog() {
+    final l = AppLocalizations.of(context);
+    final cs = Theme.of(context).colorScheme;
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.delete_outline_rounded, color: cs.error, size: 22),
+            const SizedBox(width: 10),
+            Expanded(child: Text(l.deleteConfirmTitle)),
+          ],
+        ),
+        content: Text(l.deleteConfirmBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l.cancel),
+          ),
+          TextButton(
+            onPressed: () => _doDelete(ctx),
+            style: TextButton.styleFrom(foregroundColor: cs.error),
+            child: Text(l.delete,
+                style: const TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -1886,69 +1907,32 @@ class _SubmissionCardState extends State<_SubmissionCard> {
                 ),
               ),
             ),
-            // Delete row — completely outside the InkWell
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-              child: _confirmingDelete
-                  ? Row(children: [
-                      Expanded(
-                        child: Text(l.deleteConfirmTitle,
-                            style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
-                      ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: () => setState(() => _confirmingDelete = false),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: cs.surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(l.cancel,
-                              style: tt.labelSmall?.copyWith(fontWeight: FontWeight.bold)),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  if (_deleting)
+                    const SizedBox(
+                      width: 16, height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  else
+                    GestureDetector(
+                      onTap: _showDeleteDialog,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: cs.error.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(20),
                         ),
+                        child: Text(l.delete,
+                            style: tt.labelSmall?.copyWith(
+                                color: cs.error, fontWeight: FontWeight.bold)),
                       ),
-                      const SizedBox(width: 8),
-                      if (_deleting)
-                        const SizedBox(width: 16, height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2))
-                      else
-                        GestureDetector(
-                          onTap: _doDelete,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: cs.error.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(l.delete,
-                                style: tt.labelSmall?.copyWith(
-                                    color: cs.error, fontWeight: FontWeight.bold)),
-                          ),
-                        ),
-                    ])
-                  : Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        if (_deleting)
-                          const SizedBox(width: 16, height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2))
-                        else
-                          GestureDetector(
-                            onTap: () => setState(() => _confirmingDelete = true),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: cs.error.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(l.delete,
-                                  style: tt.labelSmall?.copyWith(
-                                      color: cs.error, fontWeight: FontWeight.bold)),
-                            ),
-                          ),
-                      ],
                     ),
+                ],
+              ),
             ),
 
               if (_expanded) ...[
@@ -1997,9 +1981,6 @@ class _SubmissionCardState extends State<_SubmissionCard> {
                   if (metricMap['walking_double_support'] != null)
                     _DetailRow(Icons.directions_walk_rounded, l.labelDoubleSupport,
                         '${(metricMap['walking_double_support']! as double).toStringAsFixed(1)} %'),
-                  if (metricMap['walking_steadiness'] != null)
-                    _DetailRow(Icons.balance_rounded, l.labelWalkingSteadiness,
-                        '${(metricMap['walking_steadiness']! as double).toStringAsFixed(1)} %'),
                   if (metricMap['headphone_audio_exposure'] != null)
                     _DetailRow(Icons.headphones_rounded, l.labelHeadphoneAudio,
                         '${(metricMap['headphone_audio_exposure']! as double).toStringAsFixed(1)} dB'),

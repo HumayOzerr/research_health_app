@@ -4,7 +4,6 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '../l10n/app_localizations.dart';
 
-// ─── Palette ────────────────────────────────────────────────────────────────
 const _kPrimary = PdfColor.fromInt(0xFF1565C0);
 const _kDark    = PdfColor.fromInt(0xFF0D47A1);
 const _kGreen   = PdfColor.fromInt(0xFF2E7D32);
@@ -24,8 +23,7 @@ Future<Uint8List> buildSubmissionPdf(
     author: 'ETH Zurich - SCI & AI Lab',
   );
 
-  // ── Font loading: try Google Fonts (Unicode), fallback to Helvetica ───────
-  final lang = l.locale.languageCode;
+    final lang = l.locale.languageCode;
   pw.Font regular;
   pw.Font bold;
   pw.Font italic;
@@ -47,8 +45,7 @@ Future<Uint8List> buildSubmissionPdf(
       bold    = await PdfGoogleFonts.notoSansArabicBold();
       italic  = regular;
     } else {
-      // en, de, fr, it, es, tr, ru — Noto Sans covers Latin Extended + Cyrillic
-      regular = await PdfGoogleFonts.notoSansRegular();
+            regular = await PdfGoogleFonts.notoSansRegular();
       bold    = await PdfGoogleFonts.notoSansBold();
       italic  = await PdfGoogleFonts.notoSansItalic();
     }
@@ -58,8 +55,7 @@ Future<Uint8List> buildSubmissionPdf(
     italic  = pw.Font.helveticaOblique();
   }
 
-  // ── Extract data ──────────────────────────────────────────────────────────
-  final submission  = data['submission']  as Map<String, dynamic>? ?? {};
+    final submission  = data['submission']  as Map<String, dynamic>? ?? {};
   final participant = data['participant'] as Map<String, dynamic>? ?? {};
   final selfReport  = data['self_report'] as Map<String, dynamic>? ?? {};
   final metrics     = (data['health_metrics'] as List<dynamic>?) ?? [];
@@ -81,8 +77,7 @@ Future<Uint8List> buildSubmissionPdf(
   final musculoskeletal = ((painMap?['musculoskeletal'] as Map?)?['value']) as int?;
   final bloodGlucose    = glucoseRaw?.toDouble();
 
-  // ── Format date (fallback to today) ──────────────────────────────────────
-  String displayDate;
+    String displayDate;
   try {
     final dt = DateTime.parse(submittedAt).toLocal();
     displayDate =
@@ -93,8 +88,7 @@ Future<Uint8List> buildSubmissionPdf(
         '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
   }
 
-  // ── Insight level ─────────────────────────────────────────────────────────
-  final score = _computeScore(rating, sleepQuality, neuropathic, musculoskeletal);
+    final score = _computeScore(rating, sleepQuality, neuropathic, musculoskeletal);
   final String levelLabel;
   final PdfColor levelColor;
   if (score >= 0.78) {
@@ -121,12 +115,10 @@ Future<Uint8List> buildSubmissionPdf(
       pageFormat: PdfPageFormat.a4,
       margin: const pw.EdgeInsets.symmetric(horizontal: 40, vertical: 36),
       build: (ctx) => [
-        // ── Header ────────────────────────────────────────────────────────
-        _header(l, bold, regular, displayDate, participantId, ageRange),
+                _header(l, bold, regular, displayDate, participantId, ageRange),
         pw.SizedBox(height: 20),
 
-        // ── Assessment card ───────────────────────────────────────────────
-        _sectionCard(
+                _sectionCard(
           title: _p(l.insightTitle),
           accentColor: levelColor,
           bold: bold, regular: regular, italic: italic,
@@ -171,8 +163,7 @@ Future<Uint8List> buildSubmissionPdf(
         ),
         pw.SizedBox(height: 14),
 
-        // ── Self-Report ───────────────────────────────────────────────────
-        _sectionCard(
+                _sectionCard(
           title: _p(l.pdfWellbeingSelfReport),
           accentColor: _kPrimary,
           bold: bold, regular: regular, italic: italic,
@@ -229,8 +220,7 @@ Future<Uint8List> buildSubmissionPdf(
         ),
         pw.SizedBox(height: 14),
 
-        // ── Health Metrics ─────────────────────────────────────────────────
-        if (metrics.isNotEmpty)
+                if (metrics.isNotEmpty)
           _sectionCard(
             title: _p(l.healthMetrics),
             accentColor: const PdfColor.fromInt(0xFF00796B),
@@ -242,8 +232,7 @@ Future<Uint8List> buildSubmissionPdf(
 
         pw.SizedBox(height: 14),
 
-        // ── Footer ─────────────────────────────────────────────────────────
-        _footer(l, regular, submissionId),
+                _footer(l, regular, submissionId),
       ],
     ),
   );
@@ -251,21 +240,8 @@ Future<Uint8List> buildSubmissionPdf(
   return doc.save();
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-// Replaces characters outside Helvetica WinAnsi range so the PDF is readable
-// even when Noto Sans fails to load (offline / font download error).
-// Applied to ALL localized strings before they enter pw.Text.
 String _p(String s) => s
-    .replaceAll('—', ' - ')  // em-dash —
-    .replaceAll('–', '-')    // en-dash –
-    .replaceAll('−', '-')    // minus sign −
-    .replaceAll('’', '\'')   // right single quotation mark '
-    .replaceAll('‘', '\'')   // left  single quotation mark '
-    .replaceAll('“', '"')    // left  double quotation mark "
-    .replaceAll('”', '"')    // right double quotation mark "
-    .replaceAll('•', '-');   // bullet •
-
+    .replaceAll('—', ' - ')      .replaceAll('–', '-')        .replaceAll('−', '-')        .replaceAll('’', '\'')       .replaceAll('‘', '\'')       .replaceAll('“', '"')        .replaceAll('”', '"')        .replaceAll('•', '-');   
 double _computeScore(int? rating, int? sleepQ, int? neuro, int? musculo) {
   double pts = 0, max = 0;
   if (rating != null)  { max += 4; pts += (rating - 1).clamp(0, 4).toDouble(); }
@@ -336,8 +312,6 @@ PdfColor _ratingColor(int r) {
   if (r == 2) return _kOrange;
   return _kRed;
 }
-
-// ─── UI building blocks ───────────────────────────────────────────────────────
 
 pw.Widget _header(
   AppLocalizations l,
@@ -599,8 +573,6 @@ pw.Widget _footer(AppLocalizations l, pw.Font regular, String submissionId) {
     ),
   );
 }
-
-// ─── Metric helpers (uses localization keys) ─────────────────────────────────
 
 String _metricLabel(AppLocalizations l, String type) => switch (type) {
   'step_count'               => l.labelStepsToday,

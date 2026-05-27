@@ -25,8 +25,7 @@ class Submission {
   final double? walkingSpeedKmh;
   final int? flightsClimbed;
   final double? distanceKm;
-  // Native HealthKit extras
-  final double? walkingStepLengthM;
+    final double? walkingStepLengthM;
   final double? walkingAsymmetryPct;
   final double? walkingDoubleSupportPct;
   final double? walkingStabilityPct;

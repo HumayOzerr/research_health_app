@@ -207,14 +207,12 @@ class _ReviewScreenState extends State<ReviewScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
-          // ── Date hero card ──────────────────────────────────────────────
-          FadeSlideIn(
+                    FadeSlideIn(
             child: _DateHeroCard(date: widget.selectedDate, locale: locale, l: l),
           ),
           const SizedBox(height: 16),
 
-          // ── Participant ─────────────────────────────────────────────────
-          FadeSlideIn(
+                    FadeSlideIn(
             delay: const Duration(milliseconds: 60),
             child: _SectionCard(
               title: l.participant,
@@ -264,8 +262,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
           ),
           const SizedBox(height: 12),
 
-          // ── Wellbeing ───────────────────────────────────────────────────
-          FadeSlideIn(
+                    FadeSlideIn(
             delay: const Duration(milliseconds: 100),
             child: _SectionCard(
               title: l.wellbeing,
@@ -328,8 +325,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
           ),
           const SizedBox(height: 12),
 
-          // ── Health Metrics ──────────────────────────────────────────────
-          FadeSlideIn(
+                    FadeSlideIn(
             delay: const Duration(milliseconds: 140),
             child: _SectionCard(
               title: l.healthMetrics,
@@ -458,8 +454,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
           ),
           const SizedBox(height: 28),
 
-          // ── Actions ─────────────────────────────────────────────────────
-          FadeSlideIn(
+                    FadeSlideIn(
             delay: const Duration(milliseconds: 180),
             child: FilledButton.icon(
               onPressed: (_submitting || _loadingHealth) ? null : _submit,
@@ -521,8 +516,6 @@ class _ReviewScreenState extends State<ReviewScreen> {
     );
   }
 }
-
-// ── Date hero card ─────────────────────────────────────────────────────────────
 
 class _DateHeroCard extends StatelessWidget {
   final DateTime date;
@@ -604,8 +597,6 @@ class _DateHeroCard extends StatelessWidget {
   }
 }
 
-// ── Section card ───────────────────────────────────────────────────────────────
-
 class _SectionCard extends StatelessWidget {
   final String title;
   final IconData icon;
@@ -659,8 +650,6 @@ class _SectionCard extends StatelessWidget {
   }
 }
 
-// ── Metric row (icon + label + value) ─────────────────────────────────────────
-
 class _MetricRow extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -712,8 +701,6 @@ class _MetricRow extends StatelessWidget {
     );
   }
 }
-
-// ── Rating row (dots indicator) ────────────────────────────────────────────────
 
 class _RatingRow extends StatelessWidget {
   final IconData icon;
@@ -787,8 +774,6 @@ class _RatingRow extends StatelessWidget {
     );
   }
 }
-
-// ── Comment row ────────────────────────────────────────────────────────────────
 
 class _CommentRow extends StatelessWidget {
   final String comment;

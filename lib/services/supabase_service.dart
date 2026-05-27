@@ -18,7 +18,6 @@ class SupabaseService {
     await Supabase.initialize(url: _url, anonKey: _anonKey);
   }
 
-
   static String _toEmail(String participantId) =>
       '${participantId.toLowerCase().replaceAll(' ', '-')}@healthresearch.app';
 
@@ -154,7 +153,6 @@ class SupabaseService {
     await client.auth.updateUser(UserAttributes(password: newPassword));
   }
 
-
   Future<void> saveSubmission({
     required String id,
     required Map<String, dynamic> payload,
@@ -169,12 +167,13 @@ class SupabaseService {
   }
 
   Future<void> deleteSubmission(String id) async {
-    if (currentUser == null) return;
+    if (currentUser == null) throw Exception('Not authenticated');
     await client
         .from('submissions')
         .delete()
         .eq('id', id)
-        .eq('user_id', currentUser!.id);
+        .eq('user_id', currentUser!.id)
+        .select();
   }
 
   Future<List<Map<String, dynamic>>> getSubmissions() async {

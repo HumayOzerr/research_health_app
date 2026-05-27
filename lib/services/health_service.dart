@@ -333,10 +333,7 @@ class HealthService {
     return results;
   }
 
-  /// Returns daily data points for each health metric over the 7-day week
-  /// starting at [weekStart]. Reads directly from Apple Health — no survey needed.
-  /// Keys: 'hr', 'restHr', 'energy', 'speed', 'dist', 'flights', 'sleep'
-  Future<Map<String, dynamic>> getWeeklyMetrics(DateTime weekStart) async {
+        Future<Map<String, dynamic>> getWeeklyMetrics(DateTime weekStart) async {
     final now = DateTime.now();
     final weekEnd = weekStart.add(const Duration(days: 7));
     final effectiveEnd = weekEnd.isAfter(now) ? now : weekEnd;

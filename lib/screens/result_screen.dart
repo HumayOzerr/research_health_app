@@ -374,10 +374,6 @@ class _ResultScreenState extends State<ResultScreen> {
   }
 }
 
-
-// ─────────────────────────────────────────────────────────────────
-// Insight / assessment card
-// ─────────────────────────────────────────────────────────────────
 class _InsightCard extends StatelessWidget {
   final int? rating;
   final int? sleepQuality;
@@ -397,8 +393,7 @@ class _InsightCard extends StatelessWidget {
     required this.l,
   });
 
-  // Returns 0.0–1.0 representing overall wellness score
-  double _score() {
+    double _score() {
     double points = 0;
     double max = 0;
     if (rating != null) {
@@ -491,8 +486,7 @@ class _InsightCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header row
-          Padding(
+                    Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
             child: Row(
               children: [

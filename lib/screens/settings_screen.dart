@@ -61,19 +61,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final cs = Theme.of(context).colorScheme;
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(l.signOut),
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.logout_rounded, color: cs.error, size: 22),
+            const SizedBox(width: 10),
+            Expanded(child: Text(l.signOut)),
+          ],
+        ),
         content: Text(l.signOutConfirm),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () => Navigator.pop(ctx, false),
             child: Text(l.goBack),
           ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: cs.error),
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(l.signOut),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: cs.error),
+            child: Text(l.signOut, style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -104,8 +110,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
             children: [
-              // ── Profile card
-              FadeSlideIn(
+                            FadeSlideIn(
                 child: _ProfileCard(
                   profile: _profile,
                   photo: _photo,
@@ -116,8 +121,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const SizedBox(height: 28),
 
-              // ── Appearance
-              FadeSlideIn(
+                            FadeSlideIn(
                 delay: const Duration(milliseconds: 60),
                 child: _SectionLabel(
                     label: l.appearance,
@@ -136,8 +140,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const SizedBox(height: 28),
 
-              // ── Language
-              FadeSlideIn(
+                            FadeSlideIn(
                 delay: const Duration(milliseconds: 120),
                 child: _SectionLabel(
                     label: l.language,
@@ -156,8 +159,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const SizedBox(height: 36),
 
-              // ── Sign out
-              FadeSlideIn(
+                            FadeSlideIn(
                 delay: const Duration(milliseconds: 200),
                 child: SizedBox(
                   height: 52,
@@ -186,9 +188,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Profile card
-// ─────────────────────────────────────────────────────────────────
 class _ProfileCard extends StatelessWidget {
   final Map<String, dynamic>? profile;
   final File? photo;
@@ -285,9 +284,6 @@ class _ProfileCard extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Section label with icon
-// ─────────────────────────────────────────────────────────────────
 class _SectionLabel extends StatelessWidget {
   final String label;
   final IconData icon;
@@ -319,9 +315,6 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Theme segmented selector
-// ─────────────────────────────────────────────────────────────────
 class _ThemeSelector extends StatelessWidget {
   final SettingsService settings;
   final AppLocalizations l;
@@ -393,9 +386,6 @@ class _ThemeSelector extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Language list card
-// ─────────────────────────────────────────────────────────────────
 class _LanguageCard extends StatelessWidget {
   final SettingsService settings;
   final TextTheme tt;

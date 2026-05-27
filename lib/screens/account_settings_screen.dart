@@ -273,8 +273,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
                   children: [
-                    // ── Avatar header ──────────────────────────
-                    FadeSlideIn(
+                                        FadeSlideIn(
                       child: _AvatarHeader(
                         initials: _initials,
                         firstName: _firstNameCtrl.text.trim(),
@@ -289,8 +288,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
 
                     const SizedBox(height: 28),
 
-                    // ── Personal info ──────────────────────────
-                    FadeSlideIn(
+                                        FadeSlideIn(
                       delay: const Duration(milliseconds: 50),
                       child: _SectionLabel(
                         l.personalInfo,
@@ -332,8 +330,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
 
                     const SizedBox(height: 28),
 
-                    // ── Physical info ──────────────────────────
-                    FadeSlideIn(
+                                        FadeSlideIn(
                       delay: const Duration(milliseconds: 100),
                       child: _SectionLabel(
                         l.physicalInfo,
@@ -361,8 +358,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                             },
                           ),
                           const SizedBox(height: 16),
-                          // Age range chip picker
-                          Text(
+                                                    Text(
                             l.ageRange,
                             style: tt.labelMedium?.copyWith(
                               color: cs.onSurfaceVariant,
@@ -419,8 +415,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
 
                     const SizedBox(height: 28),
 
-                    // ── Gender ─────────────────────────────────
-                    FadeSlideIn(
+                                        FadeSlideIn(
                       delay: const Duration(milliseconds: 130),
                       child: _SectionLabel(
                         l.gender,
@@ -494,8 +489,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
 
                     const SizedBox(height: 36),
 
-                    // ── Buttons ────────────────────────────────
-                    FadeSlideIn(
+                                        FadeSlideIn(
                       delay: const Duration(milliseconds: 170),
                       child: FilledButton(
                         onPressed: _saving ? null : _save,
@@ -538,8 +532,6 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
     );
   }
 }
-
-// ── Avatar header ───────────────────────────────────────────────────────────
 
 class _AvatarHeader extends StatelessWidget {
   final String initials;
@@ -659,8 +651,6 @@ class _AvatarHeader extends StatelessWidget {
   }
 }
 
-// ── Section label ───────────────────────────────────────────────────────────
-
 class _SectionLabel extends StatelessWidget {
   final String text;
   final IconData icon;
@@ -691,8 +681,6 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
-// ── Field group card ────────────────────────────────────────────────────────
-
 class _FieldCard extends StatelessWidget {
   final List<Widget> children;
   final ColorScheme cs;
@@ -714,8 +702,6 @@ class _FieldCard extends StatelessWidget {
     );
   }
 }
-
-// ── Change password sheet ───────────────────────────────────────────────────
 
 class _ChangePasswordSheet extends StatefulWidget {
   const _ChangePasswordSheet();

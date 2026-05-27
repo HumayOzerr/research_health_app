@@ -17,10 +17,7 @@ class ProfilePhotoService {
     return await file.exists() ? file : null;
   }
 
-  /// Opens the image picker. Returns the saved [File] on success,
-  /// null if cancelled, or throws [PhotoPermissionDeniedException] if
-  /// the user has denied camera/photo library access.
-  static Future<File?> pick({required ImageSource source}) async {
+        static Future<File?> pick({required ImageSource source}) async {
     try {
       final picked = await ImagePicker().pickImage(
         source: source,

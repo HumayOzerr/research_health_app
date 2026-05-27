@@ -8,8 +8,7 @@ class NativeHealthService {
   factory NativeHealthService() => _instance;
   NativeHealthService._();
 
-  /// Returns 'pong' if the native channel is reachable, null otherwise.
-  Future<String?> ping() async {
+    Future<String?> ping() async {
     try {
       return await _channel.invokeMethod<String>('ping');
     } catch (e) {
@@ -47,10 +46,7 @@ class NativeHealthService {
     }
   }
 
-  /// Returns daily avg/min/max data points for the 7-day week starting at [weekStart].
-  /// Each key maps to a list of [NativeRangePt].
-  /// Keys: 'stepLen', 'asymmetry', 'dblSupport', 'steadiness', 'headphone'
-  Future<Map<String, List<NativeRangePt>>> getWeeklyNativeMetrics(
+        Future<Map<String, List<NativeRangePt>>> getWeeklyNativeMetrics(
       DateTime weekStart) async {
     try {
       final iso = weekStart.toIso8601String().split('T').first;

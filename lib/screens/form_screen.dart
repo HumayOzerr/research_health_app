@@ -124,12 +124,10 @@ class _FormScreenState extends State<FormScreen> {
     return _selectedDate.difference(_lastPeriodStart!).inDays + 1;
   }
 
-  // True when the selected date is within an active/recent cycle (days 1–35)
-  bool get _isContinuingCycle =>
+    bool get _isContinuingCycle =>
       _lastPeriodStart != null && _cycleDay >= 1 && _cycleDay <= 35;
 
-  // True when a new period entry is expected (no history or cycle too long)
-  bool get _isNewCycleExpected =>
+    bool get _isNewCycleExpected =>
       _lastPeriodStart == null || _cycleDay < 1 || _cycleDay > 35;
 
   String _cyclePhase(int day) => switch (day) {
@@ -269,8 +267,7 @@ class _FormScreenState extends State<FormScreen> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
             children: [
-              // ── Date
-              FadeSlideIn(
+                            FadeSlideIn(
                 child: _DateCard(
                   selectedDate: _selectedDate,
                   isToday: _isToday,
@@ -282,8 +279,7 @@ class _FormScreenState extends State<FormScreen> {
 
               const SizedBox(height: 28),
 
-              // ── Sleep quality
-              FadeSlideIn(
+                            FadeSlideIn(
                 delay: const Duration(milliseconds: 70),
                 child: _SectionHeader(
                   icon: Icons.bedtime_rounded,
@@ -313,8 +309,7 @@ class _FormScreenState extends State<FormScreen> {
 
               const SizedBox(height: 28),
 
-              // ── Wellbeing
-              FadeSlideIn(
+                            FadeSlideIn(
                 delay: const Duration(milliseconds: 110),
                 child: _SectionHeader(
                   icon: Icons.self_improvement_rounded,
@@ -344,8 +339,7 @@ class _FormScreenState extends State<FormScreen> {
 
               const SizedBox(height: 28),
 
-              // ── Pain
-              FadeSlideIn(
+                            FadeSlideIn(
                 delay: const Duration(milliseconds: 150),
                 child: _SectionHeader(
                   icon: Icons.electric_bolt_rounded,
@@ -393,8 +387,7 @@ class _FormScreenState extends State<FormScreen> {
 
               const SizedBox(height: 28),
 
-              // ── Weight
-              FadeSlideIn(
+                            FadeSlideIn(
                 delay: const Duration(milliseconds: 190),
                 child: _SectionHeader(
                   icon: Icons.monitor_weight_outlined,
@@ -466,8 +459,7 @@ class _FormScreenState extends State<FormScreen> {
                 ),
               ),
 
-              // ── Blood Glucose
-              const SizedBox(height: 28),
+                            const SizedBox(height: 28),
               FadeSlideIn(
                 delay: const Duration(milliseconds: 210),
                 child: _SectionHeader(
@@ -510,8 +502,7 @@ class _FormScreenState extends State<FormScreen> {
                 ),
               ),
 
-              // ── Menstrual
-              if (_gender == 'female') ...[
+                            if (_gender == 'female') ...[
                 const SizedBox(height: 28),
                 FadeSlideIn(
                   delay: const Duration(milliseconds: 215),
@@ -565,30 +556,19 @@ class _FormScreenState extends State<FormScreen> {
                                     _hasPeriod =
                                         s.isEmpty ? null : s.first;
                                     if (_hasPeriod == true) {
-                                      // Only reset the period start date when
-                                      // it's genuinely a new cycle (no history,
-                                      // selected date is before the recorded
-                                      // start, or it's been > 35 days).
-                                      if (_isNewCycleExpected) {
+                                                                                                                                                                                              if (_isNewCycleExpected) {
                                         _lastPeriodStart = DateTime(
                                             _selectedDate.year,
                                             _selectedDate.month,
                                             _selectedDate.day);
                                         _lastPeriodStartUpdated = true;
                                       }
-                                      // Continuing cycle: hasPeriod = true
-                                      // but keep existing _lastPeriodStart.
-                                    } else if (prev == true &&
+                                                                                                                } else if (prev == true &&
                                         _isNewCycleExpected) {
-                                      // Reverted from a just-entered new cycle
-                                      // — restore the saved start date.
-                                      _lastPeriodStart = _savedPeriodStart;
+                                                                                                                  _lastPeriodStart = _savedPeriodStart;
                                       _lastPeriodStartUpdated = false;
                                     }
-                                    // If prev was true and cycle is continuing,
-                                    // keep lastPeriodStart as-is (period ended
-                                    // mid-cycle; it stays for phase tracking).
-                                  });
+                                                                                                                                              });
                                 },
                               ),
                             ],
@@ -638,8 +618,7 @@ class _FormScreenState extends State<FormScreen> {
 
               const SizedBox(height: 28),
 
-              // ── Comment
-              FadeSlideIn(
+                            FadeSlideIn(
                 delay: const Duration(milliseconds: 235),
                 child: _SectionHeader(
                   icon: Icons.chat_bubble_outline_rounded,
@@ -664,8 +643,7 @@ class _FormScreenState extends State<FormScreen> {
 
               const SizedBox(height: 32),
 
-              // ── Submit
-              FadeSlideIn(
+                            FadeSlideIn(
                 delay: const Duration(milliseconds: 270),
                 child: FilledButton(
                   onPressed: _onContinue,
@@ -695,9 +673,6 @@ class _FormScreenState extends State<FormScreen> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Section header
-// ─────────────────────────────────────────────────────────────────
 class _SectionHeader extends StatelessWidget {
   final IconData icon;
   final Color color;
@@ -751,9 +726,6 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Date picker card
-// ─────────────────────────────────────────────────────────────────
 class _DateCard extends StatelessWidget {
   final DateTime selectedDate;
   final bool isToday;
@@ -843,9 +815,6 @@ class _DateCard extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Rating selector (1–5 circles)
-// ─────────────────────────────────────────────────────────────────
 class _RatingSelector extends StatelessWidget {
   final int value;
   final ValueChanged<int> onChanged;
@@ -935,9 +904,6 @@ class _RatingSelector extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Phase info card (menstrual cycle phase)
-// ─────────────────────────────────────────────────────────────────
 class _PhaseInfoCard extends StatelessWidget {
   final int cycleDay;
   final String phaseKey;
@@ -1019,9 +985,6 @@ class _PhaseInfoCard extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Pain card (NRS 0–10)
-// ─────────────────────────────────────────────────────────────────
 class _PainCard extends StatelessWidget {
   final String title;
   final String desc;
@@ -1068,9 +1031,6 @@ class _PainCard extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────
-// NRS selector (0–10)
-// ─────────────────────────────────────────────────────────────────
 class _NRSSelector extends StatelessWidget {
   final int value;
   final ValueChanged<int> onChanged;
@@ -1131,9 +1091,6 @@ class _NRSSelector extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────
-// BMI display (redesigned callout style)
-// ─────────────────────────────────────────────────────────────────
 class _BmiDisplay extends StatelessWidget {
   final double bmi;
   final AppLocalizations l;

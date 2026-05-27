@@ -93,31 +93,27 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // ── Heart — centered, with side padding
-            Padding(
+                        Padding(
               padding: const EdgeInsets.fromLTRB(24, 14, 24, 8),
               child: FadeSlideIn(
                 child: Center(child: _PulsingHeart(color: cs.primary)),
               ),
             ),
 
-            // ── ECG — edge to edge, no horizontal padding
-            FadeSlideIn(
+                        FadeSlideIn(
               delay: const Duration(milliseconds: 25),
               child: _EcgLine(color: cs.primary),
             ),
 
             const SizedBox(height: 18),
 
-            // ── Rest of content with side padding
-            Expanded(
+                        Expanded(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 0, 24, 10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // ── Title
-                    FadeSlideIn(
+                                        FadeSlideIn(
                       delay: const Duration(milliseconds: 60),
                       child: Text(
                         l.welcomeReady,
@@ -142,8 +138,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
                     const SizedBox(height: 32),
 
-                    // ── Feature grid 2×2
-                    FadeSlideIn(
+                                        FadeSlideIn(
                       delay: const Duration(milliseconds: 120),
                       child: Row(
                         children: [
@@ -191,8 +186,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
                     const Spacer(),
 
-                    // ── Start button
-                    FadeSlideIn(
+                                        FadeSlideIn(
                       delay: const Duration(milliseconds: 210),
                       child: SizedBox(
                         height: 54,
@@ -238,9 +232,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Feature card (one of 4 in 2×2 grid)
-// ─────────────────────────────────────────────────────────────────
 class _FeatureCard extends StatelessWidget {
   final IconData icon;
   final Color color;
@@ -286,9 +277,6 @@ class _FeatureCard extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Pulsing heart with expanding glow rings
-// ─────────────────────────────────────────────────────────────────
 class _PulsingHeart extends StatefulWidget {
   final Color color;
   const _PulsingHeart({required this.color});
@@ -396,8 +384,7 @@ class _PulsingHeartState extends State<_PulsingHeart>
           child: Stack(
             alignment: Alignment.center,
             children: [
-              // Outer ring
-              Container(
+                            Container(
                 width: r2,
                 height: r2,
                 decoration: BoxDecoration(
@@ -408,8 +395,7 @@ class _PulsingHeartState extends State<_PulsingHeart>
                   ),
                 ),
               ),
-              // Inner ring
-              Container(
+                            Container(
                 width: r1,
                 height: r1,
                 decoration: BoxDecoration(
@@ -420,8 +406,7 @@ class _PulsingHeartState extends State<_PulsingHeart>
                   ),
                 ),
               ),
-              // Radial glow behind heart
-              Container(
+                            Container(
                 width: heartSize + 18,
                 height: heartSize + 18,
                 decoration: BoxDecoration(
@@ -434,8 +419,7 @@ class _PulsingHeartState extends State<_PulsingHeart>
                   ),
                 ),
               ),
-              // Heart
-              Transform.scale(
+                            Transform.scale(
                 scale: _scale.value,
                 child: Icon(
                   Icons.favorite_rounded,
@@ -451,9 +435,6 @@ class _PulsingHeartState extends State<_PulsingHeart>
   }
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Animated ECG line
-// ─────────────────────────────────────────────────────────────────
 class _EcgLine extends StatefulWidget {
   final Color color;
   const _EcgLine({required this.color});
@@ -544,8 +525,7 @@ class _EcgPainter extends CustomPainter {
     final metrics = path.computeMetrics().first;
     final total = metrics.length;
 
-    // Ghost trail
-    final ghostPaint = Paint()
+        final ghostPaint = Paint()
       ..color = color.withValues(alpha: 0.10)
       ..strokeWidth = 1.6
       ..style = PaintingStyle.stroke
@@ -558,8 +538,7 @@ class _EcgPainter extends CustomPainter {
     if (headDist > 0) {
       final activePath = metrics.extractPath(tailDist, headDist);
 
-      // Soft shadow under the active line
-      final shadowPaint = Paint()
+            final shadowPaint = Paint()
         ..color = color.withValues(alpha: 0.22)
         ..strokeWidth = 5.0
         ..style = PaintingStyle.stroke
@@ -568,8 +547,7 @@ class _EcgPainter extends CustomPainter {
             const MaskFilter.blur(BlurStyle.normal, 3);
       canvas.drawPath(activePath, shadowPaint);
 
-      // Active line
-      final activePaint = Paint()
+            final activePaint = Paint()
         ..color = color
         ..strokeWidth = 2.4
         ..style = PaintingStyle.stroke
@@ -577,13 +555,11 @@ class _EcgPainter extends CustomPainter {
       canvas.drawPath(activePath, activePaint);
     }
 
-    // Leading dot
-    if (headDist > 0 && headDist < total) {
+        if (headDist > 0 && headDist < total) {
       final t = metrics.getTangentForOffset(
           math.min(headDist, total - 0.1));
       if (t != null) {
-        // Outer glow
-        canvas.drawCircle(
+                canvas.drawCircle(
           t.position,
           8,
           Paint()
@@ -591,20 +567,17 @@ class _EcgPainter extends CustomPainter {
             ..maskFilter =
                 const MaskFilter.blur(BlurStyle.normal, 6),
         );
-        // Mid glow
-        canvas.drawCircle(
+                canvas.drawCircle(
           t.position,
           4.5,
           Paint()..color = color.withValues(alpha: 0.45),
         );
-        // Solid dot
-        canvas.drawCircle(
+                canvas.drawCircle(
           t.position,
           2.8,
           Paint()..color = color,
         );
-        // White highlight
-        canvas.drawCircle(
+                canvas.drawCircle(
           t.position - const Offset(0.7, 0.7),
           1.0,
           Paint()..color = Colors.white.withValues(alpha: 0.7),
@@ -617,9 +590,6 @@ class _EcgPainter extends CustomPainter {
   bool shouldRepaint(_EcgPainter old) => old.progress != progress;
 }
 
-// ─────────────────────────────────────────────────────────────────
-// HeaLife logo in AppBar
-// ─────────────────────────────────────────────────────────────────
 class _HeaLifeTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {

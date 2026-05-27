@@ -284,8 +284,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          // ── Optional profile photo ────────────
-                          Center(
+                                                    Center(
                             child: GestureDetector(
                               onTap: _pickPhoto,
                               child: Stack(
