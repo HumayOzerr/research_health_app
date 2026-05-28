@@ -45,7 +45,9 @@ class ResearchHealthApp extends StatelessWidget {
         } else {
           home = ConsentScreen(settings: settings);
         }
-        return MaterialApp(
+        return MediaQuery(
+          data: MediaQueryData(textScaler: TextScaler.linear(settings.textScale)),
+          child: MaterialApp(
           title: 'Healife',
           theme: AppTheme.light,
           darkTheme: AppTheme.dark,
@@ -61,6 +63,7 @@ class ResearchHealthApp extends StatelessWidget {
           scrollBehavior: const MaterialScrollBehavior().copyWith(overscroll: false),
           debugShowCheckedModeBanner: false,
           home: home,
+        ),
         );
       },
     );

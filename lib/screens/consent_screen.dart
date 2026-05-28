@@ -33,38 +33,55 @@ class _ConsentScreenState extends State<ConsentScreen> {
               padding: const EdgeInsets.all(24),
               children: [
                 FadeSlideIn(
+                  child: Center(
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: cs.primaryContainer,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.shield_outlined, size: 40, color: cs.primary),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                FadeSlideIn(
+                  delay: const Duration(milliseconds: 30),
                   child: Text(l.appTitle,
+                      textAlign: TextAlign.center,
                       style: tt.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                 ),
                 FadeSlideIn(
-                  delay: const Duration(milliseconds: 40),
+                  delay: const Duration(milliseconds: 50),
                   child: Text(l.consentSubtitle,
+                      textAlign: TextAlign.center,
                       style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 28),
                 FadeSlideIn(
                   delay: const Duration(milliseconds: 80),
-                  child: _Section(title: l.consentPurposeTitle, body: l.consentPurposeBody),
+                  child: _Section(icon: Icons.info_outline_rounded, title: l.consentPurposeTitle, body: l.consentPurposeBody),
                 ),
                 FadeSlideIn(
-                  delay: const Duration(milliseconds: 120),
-                  child: _Section(title: l.consentDataTitle, body: l.consentDataBody),
+                  delay: const Duration(milliseconds: 110),
+                  child: _Section(icon: Icons.lock_outline_rounded, title: l.consentDataTitle, body: l.consentDataBody),
                 ),
                 FadeSlideIn(
-                  delay: const Duration(milliseconds: 160),
-                  child: _Section(title: l.consentUsageTitle, body: l.consentUsageBody),
+                  delay: const Duration(milliseconds: 140),
+                  child: _Section(icon: Icons.bar_chart_rounded, title: l.consentUsageTitle, body: l.consentUsageBody),
+                ),
+                FadeSlideIn(
+                  delay: const Duration(milliseconds: 170),
+                  child: _Section(icon: Icons.phone_iphone_rounded, title: l.consentPermissionsTitle, body: l.consentPermissionsBody),
                 ),
                 FadeSlideIn(
                   delay: const Duration(milliseconds: 200),
-                  child: _Section(title: l.consentPermissionsTitle, body: l.consentPermissionsBody),
+                  child: _Section(icon: Icons.gavel_rounded, title: l.consentRightsTitle, body: l.consentRightsBody),
                 ),
                 FadeSlideIn(
-                  delay: const Duration(milliseconds: 240),
-                  child: _Section(title: l.consentRightsTitle, body: l.consentRightsBody),
-                ),
-                FadeSlideIn(
-                  delay: const Duration(milliseconds: 280),
-                  child: _Section(title: l.consentContactTitle, body: l.consentContactBody),
+                  delay: const Duration(milliseconds: 230),
+                  child: _Section(icon: Icons.mail_outline_rounded, title: l.consentContactTitle, body: l.consentContactBody),
                 ),
                 const SizedBox(height: 8),
                 FadeSlideIn(
@@ -138,10 +155,11 @@ class _ConsentScreenState extends State<ConsentScreen> {
 }
 
 class _Section extends StatelessWidget {
+  final IconData icon;
   final String title;
   final String body;
 
-  const _Section({required this.title, required this.body});
+  const _Section({required this.icon, required this.title, required this.body});
 
   @override
   Widget build(BuildContext context) {
@@ -149,16 +167,33 @@ class _Section extends StatelessWidget {
     final tt = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title,
-              style: tt.titleSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: cs.primary,
-              )),
-          const SizedBox(height: 6),
-          Text(body, style: tt.bodyMedium),
+          Container(
+            width: 34,
+            height: 34,
+            margin: const EdgeInsets.only(right: 12, top: 1),
+            decoration: BoxDecoration(
+              color: cs.primaryContainer,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, size: 17, color: cs.primary),
+          ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    style: tt.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: cs.primary,
+                    )),
+                const SizedBox(height: 4),
+                Text(body, style: tt.bodyMedium),
+              ],
+            ),
+          ),
         ],
       ),
     );

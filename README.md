@@ -37,7 +37,7 @@ All of this is combined into one JSON payload and sent to the server on submit.
   "submission": {
     "id": "550e8400-e29b-41d4-a716-446655440000",
     "timestamp_utc": "2026-05-27T09:15:00.000Z",
-    "app_version": "0.1.0"
+    "app_version": "1.0.0"
   },
   "participant": {
     "id": "P-001",

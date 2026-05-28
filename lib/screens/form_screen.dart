@@ -45,6 +45,7 @@ class _FormScreenState extends State<FormScreen> {
   String _participantId = '';
   bool _profileLoading = true;
   int? _heightCm;
+  late final ScrollController _scrollController;
 
   double? get _bloodGlucose {
     final v = double.tryParse(_glucoseController.text.replaceAll(',', '.'));
@@ -79,6 +80,7 @@ class _FormScreenState extends State<FormScreen> {
   @override
   void initState() {
     super.initState();
+    _scrollController = ScrollController()..addListener(() => setState(() {}));
     final now = DateTime.now();
     _selectedDate = DateTime(now.year, now.month, now.day);
     SupabaseService().getProfile().then((profile) {
@@ -108,11 +110,19 @@ class _FormScreenState extends State<FormScreen> {
 
   @override
   void dispose() {
+    _scrollController.dispose();
     _commentController.dispose();
     _weightController.dispose();
     _heightController.dispose();
     _glucoseController.dispose();
     super.dispose();
+  }
+
+  double get _scrollProgress {
+    if (!_scrollController.hasClients) return 0;
+    final max = _scrollController.position.maxScrollExtent;
+    if (max <= 0) return 1;
+    return (_scrollController.offset / max).clamp(0.0, 1.0);
   }
 
   bool get _isToday {
@@ -259,13 +269,24 @@ class _FormScreenState extends State<FormScreen> {
     final locale = Localizations.localeOf(context).toLanguageTag();
 
     return Scaffold(
-      appBar: AppBar(title: AppBarTitle(l.formTitle)),
+      appBar: AppBar(
+        title: AppBarTitle(l.formTitle),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(3),
+          child: LinearProgressIndicator(
+            value: _scrollProgress,
+            minHeight: 3,
+            backgroundColor: Colors.transparent,
+          ),
+        ),
+      ),
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         behavior: HitTestBehavior.translucent,
         child: Form(
           key: _formKey,
           child: ListView(
+            controller: _scrollController,
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
             children: [
                             FadeSlideIn(
@@ -278,7 +299,7 @@ class _FormScreenState extends State<FormScreen> {
                 ),
               ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 44),
 
                             FadeSlideIn(
                 delay: const Duration(milliseconds: 70),
@@ -287,6 +308,7 @@ class _FormScreenState extends State<FormScreen> {
                   color: const Color(0xFF5C6BC0),
                   title: l.sleepQuality,
                   subtitle: l.sleepQuestion,
+                  step: 1,
                 ),
               ),
               const SizedBox(height: 14),
@@ -308,7 +330,7 @@ class _FormScreenState extends State<FormScreen> {
                 ),
               ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 44),
 
                             FadeSlideIn(
                 delay: const Duration(milliseconds: 110),
@@ -317,6 +339,7 @@ class _FormScreenState extends State<FormScreen> {
                   color: cs.primary,
                   title: l.wellbeingRating,
                   subtitle: l.wellbeingQuestion,
+                  step: 2,
                 ),
               ),
               const SizedBox(height: 14),
@@ -338,7 +361,7 @@ class _FormScreenState extends State<FormScreen> {
                 ),
               ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 44),
 
                             FadeSlideIn(
                 delay: const Duration(milliseconds: 150),
@@ -346,6 +369,7 @@ class _FormScreenState extends State<FormScreen> {
                   icon: Icons.electric_bolt_rounded,
                   color: const Color(0xFFEF6C00),
                   title: l.painSection,
+                  step: 3,
                 ),
               ),
               const SizedBox(height: 14),
@@ -386,7 +410,7 @@ class _FormScreenState extends State<FormScreen> {
                 ),
               ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 44),
 
                             FadeSlideIn(
                 delay: const Duration(milliseconds: 190),
@@ -460,7 +484,7 @@ class _FormScreenState extends State<FormScreen> {
                 ),
               ),
 
-                            const SizedBox(height: 28),
+                            const SizedBox(height: 44),
               FadeSlideIn(
                 delay: const Duration(milliseconds: 210),
                 child: _SectionHeader(
@@ -504,7 +528,7 @@ class _FormScreenState extends State<FormScreen> {
               ),
 
                             if (_gender == 'female') ...[
-                const SizedBox(height: 28),
+                const SizedBox(height: 44),
                 FadeSlideIn(
                   delay: const Duration(milliseconds: 215),
                   child: _SectionHeader(
@@ -640,7 +664,7 @@ class _FormScreenState extends State<FormScreen> {
                 ),
               ],
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 44),
 
                             FadeSlideIn(
                 delay: const Duration(milliseconds: 235),
@@ -702,12 +726,14 @@ class _SectionHeader extends StatelessWidget {
   final Color color;
   final String title;
   final String? subtitle;
+  final int? step;
 
   const _SectionHeader({
     required this.icon,
     required this.color,
     required this.title,
     this.subtitle,
+    this.step,
   });
 
   @override
@@ -717,15 +743,41 @@ class _SectionHeader extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Container(
-          width: 38,
-          height: 38,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(11),
-          ),
-          child: Icon(icon, size: 19, color: color),
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(11),
+              ),
+              child: Icon(icon, size: 19, color: color),
+            ),
+            if (step != null)
+              Positioned(
+                right: -7,
+                top: -7,
+                child: Container(
+                  width: 18,
+                  height: 18,
+                  decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                  child: Center(
+                    child: Text(
+                      '$step',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        height: 1,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
         const SizedBox(width: 12),
         Expanded(

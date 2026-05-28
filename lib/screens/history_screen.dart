@@ -386,7 +386,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ),
         ],
       ),
-      body: ListView(
+      body: RefreshIndicator(
+        onRefresh: () async {
+          setState(() { _weekSteps = []; _weekHealth = {}; _weekNative = {}; });
+          await _load();
+        },
+        child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
           _buildWeekNav(context),
@@ -726,6 +731,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 )),
           ],
         ],
+        ),
       ),
     );
   }

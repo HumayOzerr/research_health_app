@@ -266,7 +266,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
     return Scaffold(
       appBar: AppBar(title: AppBarTitle(l.account)),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const _AccountSkeletonLoader()
           : GestureDetector(
               onTap: () => FocusScope.of(context).unfocus(),
               behavior: HitTestBehavior.translucent,
@@ -1077,6 +1077,161 @@ class _PwChecklist extends StatelessWidget {
         _PwItem(met: hasDigit, label: l.passwordRuleDigit),
         _PwItem(met: hasSpecial, label: l.passwordRuleSpecial),
       ],
+    );
+  }
+}
+
+class _AccountSkeletonLoader extends StatefulWidget {
+  const _AccountSkeletonLoader();
+
+  @override
+  State<_AccountSkeletonLoader> createState() => _AccountSkeletonLoaderState();
+}
+
+class _AccountSkeletonLoaderState extends State<_AccountSkeletonLoader>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+    _anim = CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (context, _) {
+        final color = Color.lerp(
+          cs.surfaceContainerLow,
+          cs.surfaceContainerHighest,
+          _anim.value,
+        )!;
+        return ListView(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
+          children: [
+            const SizedBox(height: 12),
+            Center(
+              child: Column(
+                children: [
+                  _SkeletonBox(width: 90, height: 90, radius: 45, color: color),
+                  const SizedBox(height: 14),
+                  _SkeletonBox(width: 140, height: 18, radius: 6, color: color),
+                  const SizedBox(height: 8),
+                  _SkeletonBox(width: 80, height: 22, radius: 11, color: color),
+                  const SizedBox(height: 4),
+                ],
+              ),
+            ),
+            const SizedBox(height: 28),
+            _SkeletonBox(width: 120, height: 28, radius: 8, color: color),
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: cs.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Column(
+                children: [
+                  _SkeletonBox(width: double.infinity, height: 52, radius: 12, color: color),
+                  const SizedBox(height: 10),
+                  _SkeletonBox(width: double.infinity, height: 52, radius: 12, color: color),
+                  const SizedBox(height: 10),
+                  _SkeletonBox(width: double.infinity, height: 52, radius: 12, color: color),
+                ],
+              ),
+            ),
+            const SizedBox(height: 28),
+            _SkeletonBox(width: 120, height: 28, radius: 8, color: color),
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: cs.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _SkeletonBox(width: double.infinity, height: 52, radius: 12, color: color),
+                  const SizedBox(height: 16),
+                  _SkeletonBox(width: 80, height: 14, radius: 4, color: color),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      _SkeletonBox(width: 64, height: 34, radius: 17, color: color),
+                      const SizedBox(width: 8),
+                      _SkeletonBox(width: 64, height: 34, radius: 17, color: color),
+                      const SizedBox(width: 8),
+                      _SkeletonBox(width: 64, height: 34, radius: 17, color: color),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 28),
+            _SkeletonBox(width: 100, height: 28, radius: 8, color: color),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(child: _SkeletonBox(width: double.infinity, height: 52, radius: 14, color: color)),
+                const SizedBox(width: 10),
+                Expanded(child: _SkeletonBox(width: double.infinity, height: 52, radius: 14, color: color)),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(child: _SkeletonBox(width: double.infinity, height: 52, radius: 14, color: color)),
+                const SizedBox(width: 10),
+                Expanded(child: _SkeletonBox(width: double.infinity, height: 52, radius: 14, color: color)),
+              ],
+            ),
+            const SizedBox(height: 36),
+            _SkeletonBox(width: double.infinity, height: 52, radius: 16, color: color),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _SkeletonBox extends StatelessWidget {
+  final double width;
+  final double height;
+  final double radius;
+  final Color color;
+
+  const _SkeletonBox({
+    required this.width,
+    required this.height,
+    required this.radius,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(radius),
+      ),
     );
   }
 }

@@ -141,6 +141,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const SizedBox(height: 28),
 
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 100),
+                child: _SectionLabel(
+                    label: l.textSize,
+                    icon: Icons.text_fields_rounded,
+                    cs: cs,
+                    tt: tt),
+              ),
+              const SizedBox(height: 10),
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 110),
+                child: _TextSizeCard(settings: widget.settings, cs: cs, tt: tt),
+              ),
+              const SizedBox(height: 28),
+
                             FadeSlideIn(
                 delay: const Duration(milliseconds: 120),
                 child: _SectionLabel(
@@ -450,6 +465,52 @@ class _LanguageCard extends StatelessWidget {
               ],
             );
           }),
+        ),
+      ),
+    );
+  }
+}
+
+class _TextSizeCard extends StatelessWidget {
+  final SettingsService settings;
+  final ColorScheme cs;
+  final TextTheme tt;
+
+  const _TextSizeCard({required this.settings, required this.cs, required this.tt});
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = settings.textScale;
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      color: cs.surfaceContainerLow,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Text('A', style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant, fontSize: 13)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Slider(
+                value: scale,
+                min: 0.8,
+                max: 1.4,
+                divisions: 6,
+                onChanged: (v) => settings.setTextScale(v),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text('A', style: tt.bodyLarge?.copyWith(fontWeight: FontWeight.bold, fontSize: 22)),
+            const SizedBox(width: 12),
+            IconButton(
+              icon: const Icon(Icons.refresh_rounded),
+              iconSize: 20,
+              tooltip: 'Reset',
+              color: cs.onSurfaceVariant,
+              onPressed: scale == 1.0 ? null : () => settings.setTextScale(1.0),
+            ),
+          ],
         ),
       ),
     );

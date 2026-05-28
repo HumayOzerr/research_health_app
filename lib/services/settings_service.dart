@@ -7,12 +7,15 @@ class SettingsService extends ChangeNotifier {
   SettingsService._();
   static const _keyTheme = 'theme_mode';
   static const _keyLocale = 'locale';
+  static const _keyTextScale = 'text_scale';
 
   ThemeMode _themeMode = ThemeMode.system;
   Locale? _locale;
+  double _textScale = 1.0;
 
   ThemeMode get themeMode => _themeMode;
   Locale? get locale => _locale;
+  double get textScale => _textScale;
 
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
@@ -24,7 +27,15 @@ class SettingsService extends ChangeNotifier {
     };
     final localeStr = prefs.getString(_keyLocale);
     _locale = localeStr != null ? Locale(localeStr) : null;
+    _textScale = prefs.getDouble(_keyTextScale) ?? 1.0;
     notifyListeners();
+  }
+
+  Future<void> setTextScale(double scale) async {
+    _textScale = scale.clamp(0.8, 1.4);
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_keyTextScale, _textScale);
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {

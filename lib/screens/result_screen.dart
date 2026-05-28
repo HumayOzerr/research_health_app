@@ -120,9 +120,38 @@ class _ResultScreenState extends State<ResultScreen> {
         padding: const EdgeInsets.all(24),
         children: [
           FadeSlideIn(
-            child: Icon(icon, size: 72, color: iconColor),
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0.0, end: 1.0),
+              duration: const Duration(milliseconds: 700),
+              curve: Curves.elasticOut,
+              builder: (context, value, child) => Transform.scale(
+                scale: value,
+                child: child,
+              ),
+              child: Center(
+                child: Container(
+                  width: 108,
+                  height: 108,
+                  decoration: BoxDecoration(
+                    color: iconColor.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Container(
+                      width: 76,
+                      height: 76,
+                      decoration: BoxDecoration(
+                        color: iconColor.withValues(alpha: 0.18),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(icon, size: 40, color: iconColor),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           FadeSlideIn(
             delay: const Duration(milliseconds: 60),
             child: Text(
