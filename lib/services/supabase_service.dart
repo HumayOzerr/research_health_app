@@ -71,7 +71,6 @@ class SupabaseService {
         password: password,
       );
     } on AuthException {
-      // If fake-email login fails, look up the real auth email stored in profiles
       try {
         final result = await client
             .from('profiles')

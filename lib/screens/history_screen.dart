@@ -76,19 +76,26 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Future<void> _load() async {
-    final profile = await SupabaseService().getProfile();
-    final currentId = profile?['participant_id'] as String?;
-    _userHeightCm = (profile?['height_cm'] as num?)?.toInt();
     final all = await StorageService().getHistory();
-    final h = currentId == null
-        ? all
-        : all.where((e) {
-            final pid = ((e['data'] as Map?)?['participant'] as Map?)?['id'] as String?;
-            return pid == currentId;
-          }).toList();
+    if (mounted) setState(() { _history = all; _loading = false; });
+    SupabaseService().getProfile().timeout(
+      const Duration(seconds: 8),
+      onTimeout: () => null,
+    ).then((profile) {
+      if (!mounted) return;
+      final currentId = profile?['participant_id'] as String?;
+      _userHeightCm = (profile?['height_cm'] as num?)?.toInt();
+      if (currentId != null) {
+        final filtered = all.where((e) {
+          final pid = ((e['data'] as Map?)?['participant'] as Map?)?['id'] as String?;
+          return pid == currentId;
+        }).toList();
+        setState(() => _history = filtered);
+      }
+    });
     List<({DateTime date, int steps})> steps = [];
     if (widget.healthGranted) steps = await widget.healthService.getStepsInRange(_weekStart);
-    if (mounted) setState(() { _history = h; _weekSteps = steps; _loading = false; });
+    if (mounted) setState(() => _weekSteps = steps);
     _loadWeekHealthData();
   }
 
@@ -255,7 +262,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (_loading) return const _HistorySkeletonScreen();
 
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
@@ -277,13 +284,27 @@ class _HistoryScreenState extends State<HistoryScreen> {
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
           children: [
             _buildWeekNav(context),
-            const SizedBox(height: 48),
+            const SizedBox(height: 64),
             Center(
               child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Icon(Icons.history_rounded, size: 64, color: cs.outlineVariant),
-                const SizedBox(height: 12),
+                Container(
+                  width: 96,
+                  height: 96,
+                  decoration: BoxDecoration(
+                    color: cs.primaryContainer.withValues(alpha: 0.4),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.insert_chart_outlined_rounded,
+                      size: 48, color: cs.primary.withValues(alpha: 0.6)),
+                ),
+                const SizedBox(height: 20),
                 Text(l.noSubmissionsYet,
-                    style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
+                    style: tt.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: cs.onSurface)),
+                const SizedBox(height: 6),
+                Text(l.noDataThisWeek,
+                    style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
               ]),
             ),
           ],
@@ -2087,6 +2108,83 @@ class _Chip extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(label, style: Theme.of(context).textTheme.labelSmall),
+    );
+  }
+}
+
+class _HistorySkeletonScreen extends StatefulWidget {
+  const _HistorySkeletonScreen();
+  @override
+  State<_HistorySkeletonScreen> createState() => _HistorySkeletonScreenState();
+}
+
+class _HistorySkeletonScreenState extends State<_HistorySkeletonScreen>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+    _anim = CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context);
+    return Scaffold(
+      appBar: AppBar(title: AppBarTitle(l.historyTitle)),
+      body: AnimatedBuilder(
+        animation: _anim,
+        builder: (context, child) {
+          final base = cs.onSurface.withValues(alpha: 0.06 + _anim.value * 0.06);
+          final shimmer = cs.onSurface.withValues(alpha: 0.03 + _anim.value * 0.04);
+          return ListView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+            children: [
+              _SkeletonBox(height: 44, color: base, radius: 12),
+              const SizedBox(height: 20),
+              for (var i = 0; i < 3; i++) ...[
+                _SkeletonBox(height: 120, color: base, radius: 16),
+                const SizedBox(height: 12),
+              ],
+              const SizedBox(height: 8),
+              _SkeletonBox(height: 180, color: shimmer, radius: 16),
+              const SizedBox(height: 12),
+              _SkeletonBox(height: 180, color: shimmer, radius: 16),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _SkeletonBox extends StatelessWidget {
+  final double height;
+  final Color color;
+  final double radius;
+  const _SkeletonBox({required this.height, required this.color, required this.radius});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: height,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(radius),
+      ),
     );
   }
 }

@@ -34,6 +34,7 @@ class _FormScreenState extends State<FormScreen> {
   String? _gender;
   bool _showMenstrual = false;
   bool? _hasPeriod;
+  int? _periodCurrentDay;
   DateTime? _lastPeriodStart;
   DateTime? _savedPeriodStart;
   bool _lastPeriodStartUpdated = false;
@@ -556,16 +557,15 @@ class _FormScreenState extends State<FormScreen> {
                                     _hasPeriod =
                                         s.isEmpty ? null : s.first;
                                     if (_hasPeriod == true) {
-                                                                                                                                                                                              if (_isNewCycleExpected) {
-                                        _lastPeriodStart = DateTime(
-                                            _selectedDate.year,
-                                            _selectedDate.month,
-                                            _selectedDate.day);
-                                        _lastPeriodStartUpdated = true;
+                                      if (_isNewCycleExpected) {
+                                        _periodCurrentDay = null;
+                                        _lastPeriodStart = null;
+                                        _lastPeriodStartUpdated = false;
                                       }
-                                                                                                                } else if (prev == true &&
+                                    } else if (prev == true &&
                                         _isNewCycleExpected) {
-                                                                                                                  _lastPeriodStart = _savedPeriodStart;
+                                      _periodCurrentDay = null;
+                                      _lastPeriodStart = _savedPeriodStart;
                                       _lastPeriodStartUpdated = false;
                                     }
                                                                                                                                               });
@@ -573,6 +573,30 @@ class _FormScreenState extends State<FormScreen> {
                               ),
                             ],
                           ),
+                          if (_hasPeriod == true && _isNewCycleExpected) ...[
+                            const SizedBox(height: 16),
+                            Text(l.periodCurrentDayQuestion,
+                                style: tt.bodySmall?.copyWith(
+                                    color: cs.onSurfaceVariant)),
+                            const SizedBox(height: 10),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                for (final day in [1, 2, 3, 4, 5, 6, 7])
+                                  ChoiceChip(
+                                    label: Text(day == 7 ? '7+' : '$day'),
+                                    selected: _periodCurrentDay == day,
+                                    onSelected: (_) => setState(() {
+                                      _periodCurrentDay = day;
+                                      _lastPeriodStart = _selectedDate.subtract(
+                                          Duration(days: day - 1));
+                                      _lastPeriodStartUpdated = true;
+                                    }),
+                                  ),
+                              ],
+                            ),
+                          ],
                           if (_hasPeriod == false &&
                               _lastPeriodStart == null) ...[
                             const SizedBox(height: 16),

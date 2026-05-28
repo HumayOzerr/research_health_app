@@ -27,6 +27,22 @@ class HealthService {
     }
   }
 
+  Future<bool> checkPermissionSilently() async {
+    try {
+      await _health.configure();
+      final now = DateTime.now();
+      final start = DateTime(now.year, now.month, now.day);
+      await _health.getHealthDataFromTypes(
+        startTime: start,
+        endTime: now,
+        types: [HealthDataType.STEPS],
+      );
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<int?> getTodaySteps() async {
     final now = DateTime.now();
     final midnight = DateTime(now.year, now.month, now.day);

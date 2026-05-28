@@ -1,11 +1,13 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../l10n/app_localizations.dart';
 import '../services/health_service.dart';
 import '../services/storage_service.dart';
 import '../services/native_health_service.dart';
 import '../services/settings_service.dart';
+import '../services/supabase_service.dart';
 import '../widgets/app_page_route.dart';
 import '../widgets/fade_slide_in.dart';
 import 'form_screen.dart';
@@ -24,11 +26,23 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   final _healthService = HealthService();
   bool _loading = false;
   bool _submittedToday = false;
+  bool _healthGranted = false;
 
   @override
   void initState() {
     super.initState();
     _checkToday();
+    _checkHealthPermission();
+  }
+
+  Future<void> _checkHealthPermission() async {
+    final userId = SupabaseService().currentUser?.id;
+    if (userId == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    final didFlow = prefs.getBool('health_flow_done_$userId') ?? false;
+    if (!didFlow) return;
+    final granted = await _healthService.checkPermissionSilently();
+    if (mounted && granted) setState(() => _healthGranted = true);
   }
 
   Future<void> _checkToday() async {
@@ -41,8 +55,13 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     await _healthService.configure();
     final granted = await _healthService.requestPermissions();
     await NativeHealthService().requestPermissions();
+    final userId = SupabaseService().currentUser?.id;
+    if (userId != null) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('health_flow_done_$userId', true);
+    }
     if (!mounted) return;
-    setState(() => _loading = false);
+    setState(() { _loading = false; _healthGranted = granted; });
     Navigator.push(
       context,
       AppPageRoute(
@@ -60,7 +79,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       AppPageRoute(
         page: HistoryScreen(
           healthService: _healthService,
-          healthGranted: true,
+          healthGranted: _healthGranted,
         ),
       ),
     );

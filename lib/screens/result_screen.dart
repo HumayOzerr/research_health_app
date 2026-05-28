@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -522,6 +523,7 @@ class _InsightCard extends StatelessWidget {
                     ],
                   ),
                 ),
+                _ScoreGauge(score: score, color: levelColor),
               ],
             ),
           ),
@@ -574,6 +576,77 @@ class _InsightCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _ScoreGauge extends StatelessWidget {
+  final double score;
+  final Color color;
+  const _ScoreGauge({required this.score, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: score),
+      duration: const Duration(milliseconds: 900),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) => SizedBox(
+        width: 72,
+        height: 72,
+        child: CustomPaint(
+          painter: _GaugePainter(value: value, color: color),
+          child: Center(
+            child: Text(
+              '${(value * 100).round()}%',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GaugePainter extends CustomPainter {
+  final double value;
+  final Color color;
+  const _GaugePainter({required this.value, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2 - 6;
+    const startAngle = math.pi * 0.75;
+    const totalSweep = math.pi * 1.5;
+
+    final bgPaint = Paint()
+      ..color = color.withValues(alpha: 0.15)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 7
+      ..strokeCap = StrokeCap.round;
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      startAngle, totalSweep, false, bgPaint,
+    );
+
+    if (value > 0) {
+      final fgPaint = Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 7
+        ..strokeCap = StrokeCap.round;
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        startAngle, totalSweep * value, false, fgPaint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_GaugePainter old) => old.value != value;
 }
 
 class _SummaryRow extends StatelessWidget {
