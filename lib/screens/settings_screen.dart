@@ -118,6 +118,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   l: l,
                   cs: cs,
                   tt: tt,
+                  onReturn: _loadProfile,
                 ),
               ),
               const SizedBox(height: 28),
@@ -210,13 +211,15 @@ class _ProfileCard extends StatelessWidget {
   final AppLocalizations l;
   final ColorScheme cs;
   final TextTheme tt;
+  final VoidCallback onReturn;
 
   const _ProfileCard(
       {required this.profile,
       required this.photo,
       required this.l,
       required this.cs,
-      required this.tt});
+      required this.tt,
+      required this.onReturn});
 
   @override
   Widget build(BuildContext context) {
@@ -231,7 +234,7 @@ class _ProfileCard extends StatelessWidget {
       onTap: () => Navigator.push(
         context,
         AppPageRoute(page: const AccountSettingsScreen()),
-      ),
+      ).then((_) => onReturn()),
       borderRadius: BorderRadius.circular(20),
       child: Container(
         padding: const EdgeInsets.all(16),

@@ -69,9 +69,20 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }).toList();
   }
 
+  bool _healthGranted = false;
+
   @override
   void initState() {
     super.initState();
+    _healthGranted = _healthGranted;
+    _initAndLoad();
+  }
+
+  Future<void> _initAndLoad() async {
+    if (!_healthGranted) {
+      final granted = await widget.healthService.checkPermissionSilently();
+      if (mounted && granted) setState(() => _healthGranted = true);
+    }
     _load();
   }
 
@@ -94,20 +105,20 @@ class _HistoryScreenState extends State<HistoryScreen> {
       }
     });
     List<({DateTime date, int steps})> steps = [];
-    if (widget.healthGranted) steps = await widget.healthService.getStepsInRange(_weekStart);
+    if (_healthGranted) steps = await widget.healthService.getStepsInRange(_weekStart);
     if (mounted) setState(() => _weekSteps = steps);
     _loadWeekHealthData();
   }
 
   Future<void> _loadWeekSteps() async {
-    if (!widget.healthGranted) return;
+    if (!_healthGranted) return;
     setState(() => _stepsLoading = true);
     final steps = await widget.healthService.getStepsInRange(_weekStart);
     if (mounted) setState(() { _weekSteps = steps; _stepsLoading = false; });
   }
 
   Future<void> _loadWeekHealthData() async {
-    if (!widget.healthGranted) return;
+    if (!_healthGranted) return;
     if (mounted) setState(() => _healthLoading = true);
     final health = await widget.healthService.getWeeklyMetrics(_weekStart);
     final nativeData = await NativeHealthService().getWeeklyNativeMetrics(_weekStart);
@@ -819,13 +830,13 @@ class _ChartCard extends StatelessWidget {
                       style: tt.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
                 ),
                 if (info != null)
-                  GestureDetector(
-                    onTap: () => _showInfo(context),
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 4),
-                      child: Icon(Icons.info_outline_rounded,
-                          size: 18, color: cs.onSurfaceVariant.withValues(alpha: 0.6)),
-                    ),
+                  IconButton(
+                    onPressed: () => _showInfo(context),
+                    icon: Icon(Icons.info_outline_rounded,
+                        size: 18, color: cs.onSurfaceVariant.withValues(alpha: 0.6)),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                    visualDensity: VisualDensity.compact,
                   ),
               ],
             ),
