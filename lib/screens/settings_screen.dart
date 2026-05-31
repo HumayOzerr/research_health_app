@@ -6,7 +6,6 @@ import '../services/settings_service.dart';
 import '../services/supabase_service.dart';
 import '../widgets/app_bar_title.dart';
 import '../widgets/app_page_route.dart';
-import '../widgets/fade_slide_in.dart';
 import 'account_settings_screen.dart';
 import 'login_screen.dart';
 
@@ -111,89 +110,66 @@ class _SettingsScreenState extends State<SettingsScreen> {
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
             children: [
-                            FadeSlideIn(
-                child: _ProfileCard(
-                  profile: _profile,
-                  photo: _photo,
-                  l: l,
-                  cs: cs,
-                  tt: tt,
-                  onReturn: _loadProfile,
-                ),
+              _ProfileCard(
+                profile: _profile,
+                photo: _photo,
+                l: l,
+                cs: cs,
+                tt: tt,
+                onReturn: _loadProfile,
               ),
               const SizedBox(height: 28),
 
-                            FadeSlideIn(
-                delay: const Duration(milliseconds: 60),
-                child: _SectionLabel(
-                    label: l.appearance,
-                    icon: Icons.palette_outlined,
-                    cs: cs,
-                    tt: tt),
-              ),
-              const SizedBox(height: 10),
-              FadeSlideIn(
-                delay: const Duration(milliseconds: 80),
-                child: _ThemeSelector(
-                  settings: widget.settings,
-                  l: l,
+              _SectionLabel(
+                  label: l.appearance,
+                  icon: Icons.palette_outlined,
                   cs: cs,
-                ),
+                  tt: tt),
+              const SizedBox(height: 10),
+              _ThemeSelector(
+                settings: widget.settings,
+                l: l,
+                cs: cs,
               ),
               const SizedBox(height: 28),
 
-              FadeSlideIn(
-                delay: const Duration(milliseconds: 100),
-                child: _SectionLabel(
-                    label: l.textSize,
-                    icon: Icons.text_fields_rounded,
-                    cs: cs,
-                    tt: tt),
-              ),
+              _SectionLabel(
+                  label: l.textSize,
+                  icon: Icons.text_fields_rounded,
+                  cs: cs,
+                  tt: tt),
               const SizedBox(height: 10),
-              FadeSlideIn(
-                delay: const Duration(milliseconds: 110),
-                child: _TextSizeCard(settings: widget.settings, cs: cs, tt: tt),
-              ),
+              _TextSizeCard(settings: widget.settings, cs: cs, tt: tt),
               const SizedBox(height: 28),
 
-                            FadeSlideIn(
-                delay: const Duration(milliseconds: 120),
-                child: _SectionLabel(
-                    label: l.language,
-                    icon: Icons.language_rounded,
-                    cs: cs,
-                    tt: tt),
-              ),
-              const SizedBox(height: 10),
-              FadeSlideIn(
-                delay: const Duration(milliseconds: 140),
-                child: _LanguageCard(
-                  settings: widget.settings,
-                  tt: tt,
+              _SectionLabel(
+                  label: l.language,
+                  icon: Icons.language_rounded,
                   cs: cs,
-                ),
+                  tt: tt),
+              const SizedBox(height: 10),
+              _LanguageCard(
+                settings: widget.settings,
+                tt: tt,
+                cs: cs,
               ),
               const SizedBox(height: 36),
 
-                            FadeSlideIn(
-                delay: const Duration(milliseconds: 200),
-                child: SizedBox(
-                  height: 52,
-                  child: OutlinedButton.icon(
-                    onPressed: _signOut,
-                    icon: Icon(Icons.logout_rounded, color: cs.error, size: 20),
-                    label: Text(
-                      l.signOut,
-                      style: TextStyle(
-                          color: cs.error, fontWeight: FontWeight.w600),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(
-                          color: cs.error.withValues(alpha: 0.5), width: 1.5),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14)),
-                    ),
+              SizedBox(
+                height: 52,
+                child: OutlinedButton.icon(
+                  onPressed: _signOut,
+                  icon: Icon(Icons.logout_rounded, color: cs.error, size: 20),
+                  label: Text(
+                    l.signOut,
+                    style: TextStyle(
+                        color: cs.error, fontWeight: FontWeight.w600),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(
+                        color: cs.error.withValues(alpha: 0.5), width: 1.5),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
                   ),
                 ),
               ),

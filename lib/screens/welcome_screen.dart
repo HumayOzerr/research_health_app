@@ -53,6 +53,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   Future<void> _requestAndContinue() async {
     setState(() => _loading = true);
     await _healthService.configure();
+    await Future.delayed(const Duration(milliseconds: 400));
     final granted = await _healthService.requestPermissions();
     await NativeHealthService().requestPermissions();
     final userId = SupabaseService().currentUser?.id;
@@ -82,7 +83,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           healthGranted: _healthGranted,
         ),
       ),
-    );
+    ).then((_) => _checkToday());
   }
 
   void _openSettings() {

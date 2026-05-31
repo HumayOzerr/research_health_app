@@ -184,7 +184,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           const SizedBox(height: 28),
                           _SoftField(
                             controller: _idCtrl,
-                            label: l.participantId,
+                            label: l.participantIdOrEmail,
                             icon: Icons.badge_outlined,
                             validator: (v) => (v == null || v.trim().isEmpty)
                                 ? l.participantIdError

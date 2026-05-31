@@ -344,7 +344,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final restHr     = (_weekHealth['restHr']  as List<_Pt>?) ?? <_Pt>[];
     final sleepH     = (_weekHealth['sleep']   as List<_Pt>?) ?? <_Pt>[];
     final dist       = (_weekHealth['dist']    as List<_Pt>?) ?? <_Pt>[];
-    final flights    = (_weekHealth['flights'] as List<_Pt>?) ?? <_Pt>[];
     final energy     = (_weekHealth['energy']  as List<_Pt>?) ?? <_Pt>[];
     final speedRange = (_weekHealth['speed']   as List<_RangePt>?) ?? <_RangePt>[];
 
@@ -358,7 +357,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
     const cEnergy = Color(0xFFF57C00);
     const cSpeed = Color(0xFF8E24AA);
     const cDist = Color(0xFF43A047);
-    const cFlights = Color(0xFF1E88E5);
     const cSteps = Color(0xFF00897B);
     const cStepLen = Color(0xFF00897B);
     const cAsym = Color(0xFFAB47BC);
@@ -380,7 +378,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         sleepH.isNotEmpty || energy.isNotEmpty ||
         speedRange.isNotEmpty || dist.isNotEmpty ||
         weight.isNotEmpty || bmi.isNotEmpty ||
-        flights.isNotEmpty || _hasMenstrual(filtered) ||
+        _hasMenstrual(filtered) ||
         stepLenRange.isNotEmpty || asymmetry.isNotEmpty ||
         dblSupportRange.isNotEmpty ||
         headphoneRange.isNotEmpty || glucose.isNotEmpty ||
@@ -429,7 +427,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 info: l.infoWellbeing,
                 child: _MultiLineChart(
                   series: [_Series(data: wellbeing, color: cs.primary)],
-                  minY: 0, maxY: 5, yInterval: 1, unit: '/5',
+                  minY: 1, maxY: 5, yInterval: 1, unit: '/5',
                 ),
               ),
             ),
@@ -446,7 +444,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 info: l.infoSleepQuality,
                 child: _MultiLineChart(
                   series: [_Series(data: sleepQ, color: c1)],
-                  minY: 0, maxY: 5, yInterval: 1, unit: '/5',
+                  minY: 1, maxY: 5, yInterval: 1, unit: '/5',
                 ),
               ),
             ),
@@ -632,19 +630,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
             const SizedBox(height: 12),
           ],
 
-          if (!_healthLoading && flights.isNotEmpty) ...[
-            FadeSlideIn(
-              delay: const Duration(milliseconds: 140),
-              child: _ChartCard(
-                icon: Icons.stairs_rounded,
-                title: l.labelFlightsClimbed,
-                color: cFlights,
-                info: l.infoFlights,
-                child: _SingleBarChart(data: flights, color: cFlights, unit: 'fl'),
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
 
           if (!_healthLoading && stepLenRange.isNotEmpty) ...[
             FadeSlideIn(
@@ -957,8 +942,9 @@ class _MultiLineChart extends StatelessWidget {
       );
     }).toList();
 
-    final dotPad = (actualMax - actualMin) * 0.07;
+    final dotPad = (actualMax - actualMin) * 0.1;
     final displayMinY = actualMin - dotPad;
+    final displayMaxY = actualMax + dotPad;
 
     return SizedBox(
       height: 180,
@@ -967,7 +953,7 @@ class _MultiLineChart extends StatelessWidget {
           minX: -0.5,
           maxX: (count - 1).toDouble() + 0.5,
           minY: displayMinY,
-          maxY: actualMax,
+          maxY: displayMaxY,
           lineBarsData: bars,
           clipData: const FlClipData.all(),
           titlesData: FlTitlesData(
@@ -996,7 +982,7 @@ class _MultiLineChart extends StatelessWidget {
                 reservedSize: 34,
                 interval: yInterval ?? ((actualMax - actualMin) / 4),
                 getTitlesWidget: (v, meta) {
-                  if (v <= displayMinY || v >= actualMax) return const SizedBox();
+                  if (v < actualMin || v > actualMax) return const SizedBox();
                   return Text(
                     v == v.roundToDouble() ? v.round().toString() : v.toStringAsFixed(1),
                     style: tt.labelSmall?.copyWith(fontSize: 9, color: cs.onSurfaceVariant),

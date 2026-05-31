@@ -65,7 +65,6 @@ class _ReviewScreenState extends State<ReviewScreen> {
   double? _sleepHours;
   double? _activeEnergy;
   double? _walkingSpeed;
-  int? _flights;
   double? _distance;
   double? _restingHeartRate;
   double? _stepLengthM;
@@ -93,24 +92,22 @@ class _ReviewScreenState extends State<ReviewScreen> {
         widget.healthService.getSleepForDate(d),
         widget.healthService.getActiveEnergyForDate(d),
         widget.healthService.getWalkingSpeedForDate(d),
-        widget.healthService.getFlightsClimbedForDate(d),
         widget.healthService.getDistanceWalkingForDate(d),
         widget.healthService.getRestingHeartRateForDate(d),
         native.getWalkingMetrics(d),
         native.getAudioMetrics(d),
       ]);
       if (mounted) {
-        final walking = results[8] as WalkingMetrics;
-        final audio = results[9] as AudioMetrics;
+        final walking = results[7] as WalkingMetrics;
+        final audio = results[8] as AudioMetrics;
         setState(() {
           _steps = results[0] as int?;
           _heartRate = results[1] as double?;
           _sleepHours = results[2] as double?;
           _activeEnergy = results[3] as double?;
           _walkingSpeed = results[4] as double?;
-          _flights = results[5] as int?;
-          _distance = results[6] as double?;
-          _restingHeartRate = results[7] as double?;
+          _distance = results[5] as double?;
+          _restingHeartRate = results[6] as double?;
           _stepLengthM = walking.stepLengthM;
           _asymmetryPct = walking.asymmetryPct;
           _doubleSupportPct = walking.doubleSupportPct;
@@ -166,7 +163,6 @@ class _ReviewScreenState extends State<ReviewScreen> {
       sleepHours: _sleepHours,
       activeEnergyKcal: _activeEnergy,
       walkingSpeedKmh: _walkingSpeed,
-      flightsClimbed: _flights,
       distanceKm: _distance,
       restingHeartRateBpm: _restingHeartRate,
       walkingStepLengthM: _stepLengthM,
@@ -398,13 +394,6 @@ class _ReviewScreenState extends State<ReviewScreen> {
                             value: _distance != null ? '${_distance!.toStringAsFixed(2)} km' : l.noData,
                             iconColor: const Color(0xFF43A047),
                             hasData: _distance != null,
-                          ),
-                          _MetricRow(
-                            icon: Icons.stairs_rounded,
-                            label: l.labelFlightsClimbed,
-                            value: _flights != null ? '$_flights' : l.noData,
-                            iconColor: const Color(0xFF1E88E5),
-                            hasData: _flights != null,
                           ),
                           if (_stepLengthM != null)
                             _MetricRow(

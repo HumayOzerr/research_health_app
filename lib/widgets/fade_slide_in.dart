@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class FadeSlideIn extends StatefulWidget {
+class FadeSlideIn extends StatelessWidget {
   final Widget child;
   final Duration delay;
   final Duration duration;
@@ -10,48 +10,30 @@ class FadeSlideIn extends StatefulWidget {
     super.key,
     required this.child,
     this.delay = Duration.zero,
-    this.duration = const Duration(milliseconds: 400),
-    this.beginOffset = const Offset(0, 0.08),
+    this.duration = const Duration(milliseconds: 350),
+    this.beginOffset = const Offset(0, 0.06),
   });
 
   @override
-  State<FadeSlideIn> createState() => _FadeSlideInState();
-}
-
-class _FadeSlideInState extends State<FadeSlideIn>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
-  late final Animation<double> _opacity;
-  late final Animation<Offset> _slide;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(vsync: this, duration: widget.duration);
-    _opacity = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
-    _slide = Tween<Offset>(begin: widget.beginOffset, end: Offset.zero)
-        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
-
-    if (widget.delay == Duration.zero) {
-      _ctrl.forward();
-    } else {
-      Future.delayed(widget.delay, () {
-        if (mounted) _ctrl.forward();
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final routeAnim = ModalRoute.of(context)?.animation;
+    if (routeAnim == null) return child;
+
+    final totalDuration = 350.0;
+    final delayMs = delay.inMilliseconds.toDouble();
+    final start = (delayMs / (totalDuration + delayMs)).clamp(0.0, 0.85);
+
+    final anim = CurvedAnimation(
+      parent: routeAnim,
+      curve: Interval(start, 1.0, curve: Curves.easeOutCubic),
+    );
+
     return FadeTransition(
-      opacity: _opacity,
-      child: SlideTransition(position: _slide, child: widget.child),
+      opacity: anim,
+      child: SlideTransition(
+        position: Tween<Offset>(begin: beginOffset, end: Offset.zero).animate(anim),
+        child: child,
+      ),
     );
   }
 }

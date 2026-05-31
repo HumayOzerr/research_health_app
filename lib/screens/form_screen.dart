@@ -36,8 +36,6 @@ class _FormScreenState extends State<FormScreen> {
   bool? _hasPeriod;
   int? _periodCurrentDay;
   DateTime? _lastPeriodStart;
-  DateTime? _savedPeriodStart;
-  bool _lastPeriodStartUpdated = false;
   int _rating = 3;
   int _sleepQuality = 3;
   int _neuropathicPain = 0;
@@ -46,6 +44,7 @@ class _FormScreenState extends State<FormScreen> {
   bool _profileLoading = true;
   int? _heightCm;
   late final ScrollController _scrollController;
+  final _progressNotifier = ValueNotifier<double>(0.0);
 
   double? get _bloodGlucose {
     final v = double.tryParse(_glucoseController.text.replaceAll(',', '.'));
@@ -80,7 +79,11 @@ class _FormScreenState extends State<FormScreen> {
   @override
   void initState() {
     super.initState();
-    _scrollController = ScrollController()..addListener(() => setState(() {}));
+    _scrollController = ScrollController()..addListener(() {
+      if (!_scrollController.hasClients) return;
+      final max = _scrollController.position.maxScrollExtent;
+      _progressNotifier.value = max <= 0 ? 1.0 : (_scrollController.offset / max).clamp(0.0, 1.0);
+    });
     final now = DateTime.now();
     _selectedDate = DateTime(now.year, now.month, now.day);
     SupabaseService().getProfile().then((profile) {
@@ -95,9 +98,6 @@ class _FormScreenState extends State<FormScreen> {
             _ageRange = saved;
             _ageFromProfile = true;
           }
-          final lps = profile['last_period_start'] as String?;
-          if (lps != null) _lastPeriodStart = DateTime.tryParse(lps);
-          _savedPeriodStart = _lastPeriodStart;
           _heightCm = (profile['height_cm'] as num?)?.toInt();
         }
         _profileLoading = false;
@@ -111,6 +111,7 @@ class _FormScreenState extends State<FormScreen> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _progressNotifier.dispose();
     _commentController.dispose();
     _weightController.dispose();
     _heightController.dispose();
@@ -118,12 +119,6 @@ class _FormScreenState extends State<FormScreen> {
     super.dispose();
   }
 
-  double get _scrollProgress {
-    if (!_scrollController.hasClients) return 0;
-    final max = _scrollController.position.maxScrollExtent;
-    if (max <= 0) return 1;
-    return (_scrollController.offset / max).clamp(0.0, 1.0);
-  }
 
   bool get _isToday {
     final now = DateTime.now();
@@ -156,7 +151,6 @@ class _FormScreenState extends State<FormScreen> {
       '15-21' => _selectedDate.subtract(const Duration(days: 18)),
       _ => _selectedDate.subtract(const Duration(days: 25)),
     };
-    _lastPeriodStartUpdated = true;
   }
 
   Future<void> _pickDate() async {
@@ -175,9 +169,6 @@ class _FormScreenState extends State<FormScreen> {
     if (!_formKey.currentState!.validate()) return;
     if (!_ageFromProfile && _ageRange != null) {
       SupabaseService().updateProfile(ageRange: _ageRange);
-    }
-    if (_lastPeriodStartUpdated && _lastPeriodStart != null) {
-      SupabaseService().updateProfile(lastPeriodStart: _lastPeriodStart);
     }
     if (_heightCm == null && _effectiveHeightCm != null) {
       setState(() => _heightCm = _effectiveHeightCm);
@@ -273,10 +264,13 @@ class _FormScreenState extends State<FormScreen> {
         title: AppBarTitle(l.formTitle),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(3),
-          child: LinearProgressIndicator(
-            value: _scrollProgress,
-            minHeight: 3,
-            backgroundColor: Colors.transparent,
+          child: ValueListenableBuilder<double>(
+            valueListenable: _progressNotifier,
+            builder: (_, value, _) => LinearProgressIndicator(
+              value: value,
+              minHeight: 3,
+              backgroundColor: Colors.transparent,
+            ),
           ),
         ),
       ),
@@ -577,20 +571,11 @@ class _FormScreenState extends State<FormScreen> {
                                 multiSelectionEnabled: false,
                                 onSelectionChanged: (s) {
                                   setState(() {
-                                    final prev = _hasPeriod;
                                     _hasPeriod =
                                         s.isEmpty ? null : s.first;
-                                    if (_hasPeriod == true) {
-                                      if (_isNewCycleExpected) {
-                                        _periodCurrentDay = null;
-                                        _lastPeriodStart = null;
-                                        _lastPeriodStartUpdated = false;
-                                      }
-                                    } else if (prev == true &&
-                                        _isNewCycleExpected) {
+                                    if (_hasPeriod != true) {
                                       _periodCurrentDay = null;
-                                      _lastPeriodStart = _savedPeriodStart;
-                                      _lastPeriodStartUpdated = false;
+                                      _lastPeriodStart = null;
                                     }
                                                                                                                                               });
                                 },
@@ -615,7 +600,6 @@ class _FormScreenState extends State<FormScreen> {
                                       _periodCurrentDay = day;
                                       _lastPeriodStart = _selectedDate.subtract(
                                           Duration(days: day - 1));
-                                      _lastPeriodStartUpdated = true;
                                     }),
                                   ),
                               ],
