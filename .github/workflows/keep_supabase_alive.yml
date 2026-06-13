@@ -12,5 +12,6 @@ jobs:
       - name: Ping Supabase
         run: |
           curl -s -o /dev/null -w "%{http_code}" \
+            --retry 3 --retry-delay 10 \
             "https://siljwyndsbihphhlxjco.supabase.co/rest/v1/" \
-            -H "apikey: sb_publishable_-Z6nbg63UZK39o8VEN8T_A_mAZn9OxU"
+            -H "apikey: sb_publishable_-Z6nbg63UZK39o8VEN8T_A_mAZn9OxU" || true
